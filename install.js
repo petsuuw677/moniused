@@ -148,7 +148,7 @@
         <button type="button" data-dev="android" class="${device === 'android' ? 'on' : ''}" aria-pressed="${device === 'android'}">Android</button>
       </div>
       <ol>${stepsHtml(device)}</ol>
-      ${desktop ? '<p class="mi-note">💻 On a computer? Open <b>moniused.vercel.app</b> on your phone and follow these steps. In Chrome or Edge on a computer, you can also click the install icon in the address bar.</p>' : ''}
+      ${desktop ? '<p class="mi-note">💻 On a computer? Open <b>moniused.com</b> on your phone and follow these steps. In Chrome or Edge on a computer, you can also click the install icon in the address bar.</p>' : ''}
       <div class="mi-actions">
         <button type="button" class="btn btn-light" data-mi="later">Maybe later</button>
         <button type="button" class="btn btn-dark" data-mi="close">Got it</button>
