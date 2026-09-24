@@ -55,6 +55,21 @@
     .plan-stat.premium { background: var(--ink); color: var(--yellow); border-color: var(--ink); }
     .plan-select { padding: 6px 8px; font-size: 14px; font-family: var(--body); border: 1.5px solid var(--line); border-radius: 8px; background: #fff; }
     .plan-select:disabled { opacity: .5; }
+    #fbPanel { margin-bottom: 20px; }
+    .count-badge { display: inline-block; background: var(--red); color: #fff; font-family: var(--body); font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 999px; vertical-align: middle; margin-left: 6px; }
+    .fb-filter { display: flex; background: var(--soft); border-radius: 999px; padding: 4px; }
+    .fb-filter button { border: 0; background: none; padding: 7px 14px; border-radius: 999px; font: 700 14px var(--body); color: var(--muted); cursor: pointer; }
+    .fb-filter button.on { background: var(--ink); color: #fff; }
+    .fb-item { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+    .fb-item.done { opacity: .6; }
+    .fb-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14.5px; }
+    .fb-kind { font-size: 12.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--soft); }
+    .fb-kind.idea { background: #f6c90e55; }
+    .fb-kind.problem { background: #c9453d26; color: #9a2f28; }
+    .fb-date { margin-left: auto; font-size: 13px; }
+    .fb-msg { white-space: pre-wrap; word-break: break-word; margin: 10px 0 12px; }
+    .fb-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .fb-actions .btn { padding: 7px 14px; font-size: 14px; }
     .flash { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 600; display: none; z-index: 10; }
 
     @media (max-width: 800px) {
@@ -93,6 +108,18 @@
       <div class="plan-stat"><span>Plus</span><strong id="sPlanPlus">–</strong></div>
       <div class="plan-stat premium"><span>Premium</span><strong id="sPlanPremium">–</strong></div>
     </div>
+
+    <section class="panel" id="fbPanel">
+      <div class="panel-top">
+        <h2>Suggestions <span class="count-badge" id="fbNew" hidden></span></h2>
+        <div class="fb-filter" role="group" aria-label="Filter suggestions">
+          <button type="button" data-f="new" class="on" aria-pressed="true">New</button>
+          <button type="button" data-f="done" aria-pressed="false">Done</button>
+          <button type="button" data-f="all" aria-pressed="false">All</button>
+        </div>
+      </div>
+      <div id="fbList"><p class="empty">Loading...</p></div>
+    </section>
 
     <section class="panel">
       <div class="panel-top">
@@ -144,8 +171,72 @@
       if (error || !isAdmin) { location.href = 'dashboard.html'; return; }
 
       loadStats();
+      loadFeedback();
       loadUsers();
     }
+
+    // ---------- Suggestions ----------
+    let feedback = [];
+    let fbFilter = 'new';
+    const KIND = { idea: '💡 Idea', problem: '🐞 Problem', other: '💬 Other' };
+
+    async function loadFeedback() {
+      const { data, error } = await sb.from('feedback')
+        .select('id, kind, message, user_name, user_email, app_version, status, created_at')
+        .order('created_at', { ascending: false }).limit(300);
+      if (error) { $('fbList').innerHTML = '<p class="empty">Could not load suggestions. Refresh to try again.</p>'; return; }
+      feedback = data;
+      renderFeedback();
+    }
+
+    function renderFeedback() {
+      const newCount = feedback.filter(f => f.status === 'new').length;
+      $('fbNew').hidden = newCount === 0;
+      $('fbNew').textContent = newCount + ' new';
+
+      const list = feedback.filter(f => fbFilter === 'all' || f.status === fbFilter);
+      if (list.length === 0) {
+        $('fbList').innerHTML = `<p class="empty">${fbFilter === 'new' ? 'No new suggestions. 🎉' : 'Nothing here yet.'}</p>`;
+        return;
+      }
+      $('fbList').innerHTML = list.map(f => `
+        <div class="fb-item ${f.status === 'done' ? 'done' : ''}">
+          <div class="fb-top">
+            <span class="fb-kind ${f.kind}">${KIND[f.kind] || f.kind}</span>
+            <b>${escapeHtml(f.user_name) || 'No name'}</b>
+            <span class="muted">${escapeHtml(f.user_email)}</span>
+            <span class="muted fb-date">${new Date(f.created_at).toLocaleString('en-NG',
+              { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+          </div>
+          <p class="fb-msg">${escapeHtml(f.message)}</p>
+          <div class="fb-actions">
+            ${f.user_email ? `<a class="btn btn-light" href="mailto:${encodeURIComponent(f.user_email)}?subject=${encodeURIComponent('Re: your MoniUsed suggestion')}">Reply by email</a>` : ''}
+            <button type="button" class="btn ${f.status === 'new' ? 'btn-dark' : 'btn-light'}" data-fb="${f.id}">
+              ${f.status === 'new' ? 'Mark done ✓' : 'Move back to new'}</button>
+          </div>
+        </div>`).join('');
+    }
+
+    document.querySelectorAll('.fb-filter button').forEach(b => b.onclick = () => {
+      fbFilter = b.dataset.f;
+      document.querySelectorAll('.fb-filter button').forEach(x => {
+        x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b);
+      });
+      renderFeedback();
+    });
+
+    $('fbList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-fb]');
+      if (!btn) return;
+      const f = feedback.find(x => String(x.id) === btn.dataset.fb);
+      const status = f.status === 'new' ? 'done' : 'new';
+      btn.disabled = true;
+      const { error } = await sb.from('feedback').update({ status }).eq('id', f.id);
+      if (error) { btn.disabled = false; flash('Could not update. Try again.'); return; }
+      f.status = status;
+      renderFeedback();
+      flash(status === 'done' ? 'Marked as done ✓' : 'Moved back to new');
+    });
 
     async function loadStats() {
       const { data, error } = await sb.rpc('admin_stats');

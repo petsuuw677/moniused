@@ -10,6 +10,7 @@
   <link rel="icon" href="icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+  <script>try { if (localStorage.getItem('mu_pin')) document.documentElement.classList.add('locked'); } catch (e) {}</script>
   <style>
     html { background: var(--yellow); }
     body { background: var(--soft); min-height: 100vh; padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
@@ -314,6 +315,62 @@
     .btn-delete { background: none; border: 0; color: var(--red); font-weight: 700; margin-top: 12px; cursor: pointer; font-size: 15px; width: 100%; padding: 8px; }
     .form-msg { color: var(--red); font-size: 14px; margin-top: 10px; min-height: 1em; }
 
+    /* ---------- App lock (PIN) ---------- */
+    html.locked body > :not(#lockDialog) { visibility: hidden; }
+    #lockDialog {
+      width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0;
+      border: 0; border-radius: 0; background: var(--yellow); overflow-y: auto;
+    }
+    #lockDialog::backdrop { background: var(--yellow); }
+    .lock-inner {
+      min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: calc(24px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    }
+    .lock-logo { font-family: var(--head); font-weight: 800; font-size: 24px; margin-bottom: 26px; }
+    .lock-logo span { color: var(--green); }
+    .lock-avatar { width: 72px; height: 72px; font-size: 26px; font-family: var(--head); }
+    .lock-hello { font-weight: 700; font-size: 17px; margin: 12px 0 22px; text-align: center; }
+
+    .pin-title { text-align: center; font-weight: 700; font-size: 17px; margin: 0 0 16px; }
+    .pin-dots { display: flex; gap: 18px; justify-content: center; }
+    .pin-dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink); transition: background .1s; }
+    .pin-dots i.on { background: var(--ink); }
+    .pin-dots.shake { animation: pinShake .35s; }
+    @keyframes pinShake { 20%, 60% { transform: translateX(-9px); } 40%, 80% { transform: translateX(9px); } }
+    .pin-err { min-height: 22px; text-align: center; color: var(--red); font-size: 14px; font-weight: 600; margin: 10px 0 12px; }
+    .pin-keys { display: grid; grid-template-columns: repeat(3, 70px); gap: 14px 26px; justify-content: center; }
+    .pin-keys button {
+      width: 70px; height: 70px; border-radius: 50%; border: 0; background: var(--soft);
+      font: 600 27px var(--head); color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .pin-keys button:active { transform: scale(.93); background: var(--line); }
+    #lockDialog .pin-keys button { background: rgba(255, 255, 255, .55); }
+    .pin-keys .pin-alt, .pin-keys .pin-del, #lockDialog .pin-keys .pin-alt, #lockDialog .pin-keys .pin-del {
+      background: none; font: 700 15px var(--body);
+    }
+    .pin-keys .pin-del, #lockDialog .pin-keys .pin-del { font-size: 24px; }
+    .pin-help { text-align: center; color: var(--muted); font-size: 14px; margin-top: 16px; }
+    .pin-options { display: grid; gap: 10px; margin-top: 8px; }
+    .pin-options .btn { width: 100%; text-align: center; }
+
+    /* ---------- Suggestions ---------- */
+    .sheet-sub { color: var(--muted); font-size: 15px; margin: 0 0 4px; }
+    .kind-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 2px; }
+    .kind-chips button {
+      border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 14px;
+      font: 700 14px var(--body); color: var(--ink); cursor: pointer;
+    }
+    .kind-chips button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+    #fbText {
+      width: 100%; padding: 12px; font: 16px/1.45 var(--body); color: var(--ink);
+      border: 1.5px solid var(--line); border-radius: 12px; resize: vertical; min-height: 130px;
+    }
+    #fbText:focus { border-color: var(--green); outline: none; }
+    .fb-count { text-align: right; color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+    .fb-thanks { text-align: center; padding: 16px 0 6px; }
+    .fb-thanks .big { font-size: 46px; }
+    .fb-thanks p { color: var(--muted); margin: 6px 0 18px; }
+
     /* ---------- Saved message ---------- */
     .toast {
       position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 100;
@@ -504,6 +561,22 @@
       </button>
     </div>
 
+    <p class="group-label">Security</p>
+    <div class="settings">
+      <button type="button" class="set-row" id="pinBtn">
+        <span class="set-icon" style="background:#1b1c181f">🔐</span><span class="grow">App lock (PIN)</span>
+        <span class="value" id="pinValue">Off</span><span class="chev">›</span>
+      </button>
+    </div>
+
+    <p class="group-label">Help us improve</p>
+    <div class="settings">
+      <button type="button" class="set-row" id="feedbackBtn">
+        <span class="set-icon" style="background:#f6c90e55">💬</span><span class="grow">Send a suggestion</span>
+        <span class="value">Ideas &amp; problems</span><span class="chev">›</span>
+      </button>
+    </div>
+
     <p class="group-label">Your data</p>
     <div class="settings">
       <button type="button" class="set-row" id="exportBtn">
@@ -540,7 +613,7 @@
       </button>
     </div>
 
-    <p class="version">MoniUsed v1.3</p>
+    <p class="version">MoniUsed v1.4</p>
   </main>
 
   <!-- ================= PLANS ================= -->
@@ -569,6 +642,15 @@
 
   <!-- ================= SMALL POP-UP (edit name, password, install) ================= -->
   <dialog id="sheet"></dialog>
+
+  <dialog id="lockDialog" aria-label="MoniUsed is locked">
+    <div class="lock-inner">
+      <div class="lock-logo">Moni<span>Used</span></div>
+      <div class="avatar lock-avatar" id="lockAvatar"></div>
+      <p class="lock-hello" id="lockHello">Welcome back</p>
+      <div id="lockPad"></div>
+    </div>
+  </dialog>
 
   <!-- ================= ADD / EDIT FORM ================= -->
   <dialog id="entryDialog">
@@ -757,6 +839,7 @@
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { location.href = 'auth.html'; return; }
       user = session.user;
+      startLock();
       showTab();
 
       const { data: profile } = await sb.from('profiles')
@@ -778,7 +861,7 @@
       setMonth(thisMonth());
       loadHome();
       loadProfileStats();
-      if (window.MoniInstall) MoniInstall.autoShow();
+      if (!isLocked && window.MoniInstall) { askedInstall = true; MoniInstall.autoShow(); }
     }
 
     function showName() {
@@ -789,6 +872,8 @@
       $('pName').textContent = profileName ? profileName.split(' ').map(cap).join(' ') : 'Add your name';
       paintAvatar($('headAvatar'));
       paintAvatar($('pAvatar'));
+      paintAvatar($('lockAvatar'));
+      $('lockHello').textContent = first ? `Welcome back, ${first}` : 'Welcome back';
     }
 
     function paintAvatar(el) {
@@ -1439,6 +1524,267 @@
       toast('Entry deleted');
       refreshAll();
     }
+
+    // ================= APP LOCK (PIN) =================
+    // The PIN is saved only on this device (like a banking app), never on our server.
+    const PIN_KEY = 'mu_pin';
+    const FAILS_KEY = 'mu_pin_fails';
+    const MAX_TRIES = 5;
+    const RELOCK_AFTER = 60 * 1000;   // lock again after 1 minute away
+    let isLocked = false;
+    let lockPad = null, sheetPad = null, hiddenAt = 0, askedInstall = false;
+
+    const toB64 = (bytes) => btoa(String.fromCharCode(...bytes));
+    const fromB64 = (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+
+    function getPin() {
+      try { return JSON.parse(localStorage.getItem(PIN_KEY)); } catch (e) { return null; }
+    }
+    async function hashPin(pin, salt) {
+      const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits(
+        { name: 'PBKDF2', salt: fromB64(salt), iterations: 150000, hash: 'SHA-256' }, key, 256);
+      return toB64(new Uint8Array(bits));
+    }
+    async function savePin(pin) {
+      const salt = toB64(crypto.getRandomValues(new Uint8Array(16)));
+      localStorage.setItem(PIN_KEY, JSON.stringify({ uid: user.id, salt, hash: await hashPin(pin, salt) }));
+      localStorage.removeItem(FAILS_KEY);
+      showPinState();
+    }
+    async function checkPin(pin) {
+      const p = getPin();
+      return !!p && (await hashPin(pin, p.salt)) === p.hash;
+    }
+    function clearPin() {
+      localStorage.removeItem(PIN_KEY);
+      localStorage.removeItem(FAILS_KEY);
+      showPinState();
+    }
+    function showPinState() {
+      $('pinValue').textContent = getPin() ? 'On' : 'Off';
+    }
+
+    // A reusable number pad: 4 dots + keys
+    function makePad(box, title, onComplete, altLabel, onAlt) {
+      box.innerHTML = `
+        <p class="pin-title">${title}</p>
+        <div class="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <p class="pin-err" role="alert"></p>
+        <div class="pin-keys">
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button type="button" data-k="${n}">${n}</button>`).join('')}
+          <button type="button" class="pin-alt" data-k="alt" ${altLabel ? '' : 'style="visibility:hidden" tabindex="-1"'}>${altLabel || ''}</button>
+          <button type="button" data-k="0">0</button>
+          <button type="button" class="pin-del" data-k="del" aria-label="Delete">⌫</button>
+        </div>`;
+      let value = '', busy = false;
+      const dots = [...box.querySelectorAll('.pin-dots i')];
+      const draw = () => dots.forEach((d, i) => d.classList.toggle('on', i < value.length));
+      const pad = {
+        clear() { value = ''; busy = false; draw(); },
+        title(t) { box.querySelector('.pin-title').textContent = t; box.querySelector('.pin-err').textContent = ''; pad.clear(); },
+        fail(msg) {
+          box.querySelector('.pin-err').textContent = msg;
+          const row = box.querySelector('.pin-dots');
+          row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake');
+          if (navigator.vibrate) navigator.vibrate(120);
+          pad.clear();
+        },
+        press(k) {
+          if (busy) return;
+          if (k === 'del') { value = value.slice(0, -1); draw(); return; }
+          if (value.length >= 4) return;
+          value += k; draw();
+          if (value.length === 4) { busy = true; setTimeout(() => onComplete(value, pad), 120); }
+        }
+      };
+      box.onclick = (e) => {
+        const b = e.target.closest('[data-k]');
+        if (!b) return;
+        if (b.dataset.k === 'alt') { if (onAlt) onAlt(); return; }
+        pad.press(b.dataset.k);
+      };
+      return pad;
+    }
+
+    // Typing numbers on a keyboard also works
+    document.addEventListener('keydown', (e) => {
+      const pad = $('lockDialog').open ? lockPad : ($('sheet').open ? sheetPad : null);
+      if (!pad) return;
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); pad.press(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); pad.press('del'); }
+    });
+    $('sheet').addEventListener('close', () => { sheetPad = null; });
+
+    function startLock() {
+      const p = getPin();
+      if (p && p.uid !== user.id) clearPin();   // PIN belonged to a different account
+      showPinState();
+      if (getPin()) lock();
+      else document.documentElement.classList.remove('locked');
+    }
+
+    function lock() {
+      isLocked = true;
+      document.documentElement.classList.add('locked');
+      lockPad = makePad($('lockPad'), 'Enter your PIN', async (pin, pad) => {
+        if (await checkPin(pin)) { unlock(); return; }
+        const fails = Number(localStorage.getItem(FAILS_KEY) || 0) + 1;
+        localStorage.setItem(FAILS_KEY, String(fails));
+        const left = MAX_TRIES - fails;
+        if (left <= 0) {
+          clearPin();
+          alert('Too many wrong PINs. For your safety you have been logged out. Log in with your password to continue.');
+          await sb.auth.signOut();
+          location.href = 'auth.html';
+          return;
+        }
+        pad.fail(`Wrong PIN. ${left} ${left === 1 ? 'try' : 'tries'} left.`);
+      }, 'Forgot?', forgotPin);
+      if (!$('lockDialog').open) $('lockDialog').showModal();
+      if (document.activeElement) document.activeElement.blur();   // no focus ring on the "1" key
+    }
+
+    function unlock() {
+      isLocked = false;
+      localStorage.removeItem(FAILS_KEY);
+      $('lockDialog').close();
+      document.documentElement.classList.remove('locked');
+      if (!askedInstall && window.MoniInstall) { askedInstall = true; MoniInstall.autoShow(); }
+    }
+
+    async function forgotPin() {
+      if (!confirm('Forgot your PIN?\n\nYou will be logged out. Log back in with your email and password, then you can set a new PIN. Your entries are safe.')) return;
+      clearPin();
+      await sb.auth.signOut();
+      location.href = 'auth.html';
+    }
+
+    // The lock can't be closed with the Esc key
+    $('lockDialog').addEventListener('cancel', (e) => e.preventDefault());
+    $('lockDialog').addEventListener('close', () => { if (isLocked) $('lockDialog').showModal(); });
+
+    // Lock again when the user comes back after a while
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { hiddenAt = Date.now(); return; }
+      if (user && getPin() && !isLocked && hiddenAt && Date.now() - hiddenAt > RELOCK_AFTER) lock();
+    });
+
+    // --- Profile: set / change / turn off PIN ---
+    function openPinSetup(title) {
+      openSheet(`
+        <div class="sheet-head"><h2>${title || 'Set app PIN'}</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <div id="sheetPad"></div>
+        <p class="pin-help">You'll enter this PIN when you open MoniUsed on this device.</p>`);
+      let first = '';
+      sheetPad = makePad($('sheetPad'), 'Choose a 4-digit PIN', async (pin, pad) => {
+        if (!first) {
+          if (/^(\d)\1{3}$/.test(pin) || ['1234', '4321', '0123'].includes(pin)) {
+            pad.fail('That PIN is too easy to guess. Try another.');
+            return;
+          }
+          first = pin;
+          pad.title('Enter the same PIN again');
+          return;
+        }
+        if (pin !== first) {
+          first = '';
+          pad.title('Choose a 4-digit PIN');
+          pad.fail("The PINs didn't match. Start again.");
+          return;
+        }
+        await savePin(pin);
+        closeSheet();
+        toast('App lock is on ✓');
+      });
+    }
+
+    function askCurrentPin(title, then) {
+      openSheet(`
+        <div class="sheet-head"><h2>${title}</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <div id="sheetPad"></div>`);
+      sheetPad = makePad($('sheetPad'), 'Enter your current PIN', async (pin, pad) => {
+        if (await checkPin(pin)) then();
+        else pad.fail('Wrong PIN. Try again.');
+      });
+    }
+
+    $('pinBtn').onclick = () => {
+      if (!getPin()) { openPinSetup(); return; }
+      openSheet(`
+        <div class="sheet-head"><h2>App lock</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <p class="sheet-sub">🔐 Your PIN is on. MoniUsed asks for it when you open the app, and again after 1 minute away.</p>
+        <div class="pin-options">
+          <button type="button" class="btn btn-dark" id="changePinBtn">Change PIN</button>
+          <button type="button" class="btn btn-light" id="offPinBtn">Turn off PIN</button>
+        </div>`);
+      $('changePinBtn').onclick = () => askCurrentPin('Change PIN', () => openPinSetup('New PIN'));
+      $('offPinBtn').onclick = () => askCurrentPin('Turn off PIN', () => {
+        clearPin(); closeSheet(); toast('App lock is off');
+      });
+    };
+
+    // ================= SUGGESTIONS =================
+    const FB_PLACEHOLDER = {
+      idea: 'e.g. Please add a way to set a monthly budget for food...',
+      problem: 'What went wrong? What were you doing when it happened?',
+      other: 'Tell us anything...'
+    };
+
+    $('feedbackBtn').onclick = () => {
+      let kind = 'idea';
+      openSheet(`
+        <div class="sheet-head"><h2>Send a suggestion</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <p class="sheet-sub">Tell us what to fix or what to add. We read every message.</p>
+        <div class="kind-chips" role="group" aria-label="Type of message">
+          <button type="button" data-kind="idea" class="on" aria-pressed="true">💡 Idea</button>
+          <button type="button" data-kind="problem" aria-pressed="false">🐞 Problem</button>
+          <button type="button" data-kind="other" aria-pressed="false">💬 Other</button>
+        </div>
+        <label for="fbText">Your message</label>
+        <textarea id="fbText" maxlength="2000" placeholder="${FB_PLACEHOLDER.idea}"></textarea>
+        <div class="fb-count" id="fbCount">0 / 2000</div>
+        <p class="form-msg" id="sheetMsg"></p>
+        <button type="button" class="btn btn-dark" id="fbSend" style="width:100%;margin-top:6px">Send</button>`);
+
+      document.querySelectorAll('.kind-chips button').forEach(b => b.onclick = () => {
+        kind = b.dataset.kind;
+        document.querySelectorAll('.kind-chips button').forEach(x => {
+          x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b);
+        });
+        $('fbText').placeholder = FB_PLACEHOLDER[kind];
+      });
+      $('fbText').oninput = () => { $('fbCount').textContent = $('fbText').value.length + ' / 2000'; };
+
+      $('fbSend').onclick = async () => {
+        const message = $('fbText').value.trim();
+        if (message.length < 5) { $('sheetMsg').textContent = 'Please write a little more (at least 5 characters).'; return; }
+        $('fbSend').disabled = true;
+        $('fbSend').textContent = 'Sending...';
+        $('sheetMsg').textContent = '';
+
+        const { error } = await sb.from('feedback').insert({
+          kind, message, app_version: '1.4', device: navigator.userAgent.slice(0, 300)
+        });
+
+        if (error) {
+          $('fbSend').disabled = false;
+          $('fbSend').textContent = 'Send';
+          $('sheetMsg').textContent = /too many/i.test(error.message)
+            ? "You've sent a lot of messages in the last hour. Please try again later."
+            : 'Could not send. Check your internet and try again.';
+          return;
+        }
+
+        $('sheet').innerHTML = `
+          <div class="fb-thanks">
+            <div class="big">🙏</div>
+            <h2>Thank you!</h2>
+            <p>We got your message. We'll look at it soon and may reply by email.</p>
+            <button type="button" class="btn btn-dark" style="width:100%" onclick="closeSheet()">Done</button>
+          </div>`;
+      };
+    };
 
     // ================= BUTTONS =================
     $('cancelBtn').onclick = closeForm;
