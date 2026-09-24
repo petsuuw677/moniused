@@ -1,10 +1,11 @@
 // MoniUsed service worker
 // Change the version number whenever you want phones to refresh their saved copy.
-const CACHE = 'moniused-v1';
+const CACHE = 'moniused-v2';
 
 const FILES = [
   '/', '/index.html', '/auth.html', '/dashboard.html', '/admin.html',
-  '/style.css', '/config.js', '/manifest.json',
+  '/terms.html', '/privacy.html',
+  '/style.css', '/config.js', '/install.js', '/manifest.json',
   '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'
 ];
 

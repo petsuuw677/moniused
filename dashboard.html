@@ -38,6 +38,17 @@
       display: grid; place-items: center; font-weight: 700; font-size: 16px; text-decoration: none; flex: 0 0 auto;
     }
     .avatar.big { width: 64px; height: 64px; font-size: 24px; font-family: var(--head); }
+    .avatar { overflow: hidden; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .avatar-edit { position: relative; border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; flex: 0 0 auto; }
+    .avatar-edit .cam {
+      position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; border: 1px solid var(--line); display: grid; place-items: center; font-size: 13px;
+    }
+    .photo-preview { width: 110px; height: 110px; font-size: 40px; margin: 8px auto 16px; }
+    .photo-actions { display: grid; gap: 10px; }
+    .photo-actions .btn { width: 100%; text-align: center; }
+    .file-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
     /* ---------- Glass tab bar ---------- */
     .tabbar {
@@ -455,7 +466,9 @@
     <h1 style="margin-bottom:16px">Profile</h1>
 
     <section class="profile-card">
-      <div class="avatar big" id="pAvatar">–</div>
+      <button type="button" class="avatar-edit" id="avatarEditBtn" aria-label="Change profile photo">
+        <div class="avatar big" id="pAvatar">–</div><span class="cam" aria-hidden="true">📷</span>
+      </button>
       <div style="min-width:0">
         <h2 id="pName">–</h2>
         <p id="pEmail">–</p>
@@ -480,6 +493,9 @@
 
     <p class="group-label">Account</p>
     <div class="settings">
+      <button type="button" class="set-row" id="photoBtn">
+        <span class="set-icon" style="background:#e8833a26">📷</span><span class="grow">Profile photo</span><span class="chev">›</span>
+      </button>
       <button type="button" class="set-row" id="editNameBtn">
         <span class="set-icon" style="background:#3b82c426">✏️</span><span class="grow">Edit name</span><span class="chev">›</span>
       </button>
@@ -506,6 +522,12 @@
       <a href="/" class="set-row">
         <span class="set-icon" style="background:#8a8d8526">🌐</span><span class="grow">MoniUsed website</span><span class="chev">›</span>
       </a>
+      <a href="terms.html" class="set-row">
+        <span class="set-icon" style="background:#4a64b026">📄</span><span class="grow">Terms of Service</span><span class="chev">›</span>
+      </a>
+      <a href="privacy.html" class="set-row">
+        <span class="set-icon" style="background:#1f9d6b26">🛡️</span><span class="grow">Privacy Policy</span><span class="chev">›</span>
+      </a>
     </div>
 
     <!-- Admin section is only created here by code, for admins -->
@@ -518,7 +540,7 @@
       </button>
     </div>
 
-    <p class="version">MoniUsed v1.2</p>
+    <p class="version">MoniUsed v1.3</p>
   </main>
 
   <!-- ================= PLANS ================= -->
@@ -584,6 +606,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="install.js"></script>
 
   <script>
     // ================= SETTINGS =================
@@ -711,6 +734,7 @@
     let profileCreated = null;
     let notifications = [];
     let currentPlan = 'starter';
+    let avatarUrl = null;
     let billing = 'monthly';
 
     // ================= TABS =================
@@ -736,10 +760,11 @@
       showTab();
 
       const { data: profile } = await sb.from('profiles')
-        .select('full_name, role, created_at, plan').eq('id', user.id).single();
+        .select('full_name, role, created_at, plan, avatar_url').eq('id', user.id).single();
 
       profileName = (profile && profile.full_name) || '';
       profileCreated = (profile && profile.created_at) || user.created_at;
+      avatarUrl = (profile && profile.avatar_url) || null;
       showName();
       $('pEmail').textContent = user.email;
       $('pSince').textContent = 'Member since ' + new Date(profileCreated)
@@ -753,6 +778,7 @@
       setMonth(thisMonth());
       loadHome();
       loadProfileStats();
+      MoniInstall.autoShow();
     }
 
     function showName() {
@@ -761,9 +787,18 @@
       const hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
       $('greet').textContent = first ? `${hello}, ${first} 👋` : `${hello} 👋`;
       $('pName').textContent = profileName ? profileName.split(' ').map(cap).join(' ') : 'Add your name';
-      const ini = initials(profileName, user.email);
-      $('headAvatar').textContent = ini;
-      $('pAvatar').textContent = ini;
+      paintAvatar($('headAvatar'));
+      paintAvatar($('pAvatar'));
+    }
+
+    function paintAvatar(el) {
+      if (!el) return;
+      if (avatarUrl) {
+        el.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="">`;
+        el.querySelector('img').onerror = () => { el.textContent = initials(profileName, user.email); };
+      } else {
+        el.textContent = initials(profileName, user.email);
+      }
     }
 
     function addAdminSection() {
@@ -1036,14 +1071,84 @@
       toast('Password changed ✓');
     }
 
-    $('installBtn').onclick = () => {
+    $('installBtn').onclick = () => MoniInstall.show();
+
+    // ---------- Profile photo ----------
+    function openPhotoSheet() {
       openSheet(`
-        <div class="sheet-head"><h2>Install MoniUsed</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
-        <p style="margin:10px 0"><b>iPhone (Safari):</b> tap the Share button, then <b>Add to Home Screen</b>.</p>
-        <p style="margin:10px 0"><b>Android (Chrome):</b> tap the ⋮ menu, then <b>Add to Home screen</b> or <b>Install app</b>.</p>
-        <p class="muted" style="margin:10px 0">MoniUsed will then open from your home screen like a normal app.</p>
-        <div class="form-actions"><button type="button" class="btn btn-dark" onclick="closeSheet()">Got it</button></div>`);
-    };
+        <div class="sheet-head"><h2>Profile photo</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <div class="avatar photo-preview" id="photoPreview"></div>
+        <input type="file" id="photoInput" class="file-hidden" accept="image/*">
+        <div class="photo-actions">
+          <label for="photoInput" class="btn btn-dark" id="choosePhotoBtn">${avatarUrl ? 'Change photo' : 'Choose photo'}</label>
+          ${avatarUrl ? '<button type="button" class="btn btn-light" onclick="removePhoto()">Remove photo</button>' : ''}
+        </div>
+        <p class="form-msg" id="sheetMsg" style="text-align:center"></p>`);
+      paintAvatar($('photoPreview'));
+      $('photoInput').onchange = () => { const f = $('photoInput').files[0]; if (f) uploadPhoto(f); };
+    }
+    $('photoBtn').onclick = openPhotoSheet;
+    $('avatarEditBtn').onclick = openPhotoSheet;
+
+    // Crop to a square and shrink, so uploads are small and fast
+    function squareJpeg(file, size) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const src = URL.createObjectURL(file);
+        img.onload = () => {
+          const side = Math.min(img.naturalWidth, img.naturalHeight);
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = size;
+          canvas.getContext('2d').drawImage(img,
+            (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
+          URL.revokeObjectURL(src);
+          canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not read photo')), 'image/jpeg', 0.85);
+        };
+        img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('Could not read photo')); };
+        img.src = src;
+      });
+    }
+
+    async function uploadPhoto(file) {
+      const msg = $('sheetMsg');
+      msg.style.color = 'var(--muted)';
+      if (!file.type.startsWith('image/')) { msg.style.color = ''; msg.textContent = 'Choose a photo (JPG or PNG).'; return; }
+      msg.textContent = 'Uploading...';
+      $('choosePhotoBtn').style.pointerEvents = 'none';
+
+      try {
+        const blob = await squareJpeg(file, 320);
+        const path = `${user.id}/avatar.jpg`;
+        const { error: upErr } = await sb.storage.from('avatars')
+          .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+        if (upErr) throw upErr;
+
+        const { data } = sb.storage.from('avatars').getPublicUrl(path);
+        const url = data.publicUrl + '?v=' + Date.now();   // makes phones show the new photo straight away
+        const { error: saveErr } = await sb.rpc('update_my_avatar', { new_url: url });
+        if (saveErr) throw saveErr;
+
+        avatarUrl = url;
+        showName();
+        closeSheet();
+        toast('Profile photo updated ✓');
+      } catch (err) {
+        msg.style.color = '';
+        msg.textContent = 'Could not upload that photo. Try another one.';
+        $('choosePhotoBtn').style.pointerEvents = '';
+      }
+    }
+
+    async function removePhoto() {
+      if (!confirm('Remove your profile photo?')) return;
+      await sb.storage.from('avatars').remove([`${user.id}/avatar.jpg`]);
+      const { error } = await sb.rpc('update_my_avatar', { new_url: null });
+      if (error) { $('sheetMsg').textContent = 'Could not remove photo. Try again.'; return; }
+      avatarUrl = null;
+      showName();
+      closeSheet();
+      toast('Profile photo removed');
+    }
 
     $('exportBtn').onclick = async () => {
       const { data, error } = await sb.from('transactions')

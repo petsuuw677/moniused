@@ -11,6 +11,16 @@
   <link rel="icon" href="icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+  <style>
+    .nav .get-app { padding: 9px 16px; font-size: 15px; }
+    .app-link {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
+      background: rgba(255,255,255,.55); border: 0; border-radius: 999px; padding: 10px 16px;
+      font-family: var(--body); font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer;
+    }
+    .app-link:hover { background: rgba(255,255,255,.85); }
+    @media (max-width: 480px) { .nav .get-app { display: none; } }
+  </style>
 </head>
 <body>
 
@@ -20,6 +30,7 @@
       <nav class="nav">
         <a href="#plans" class="link">Plans</a>
         <a href="auth.html" class="link">Log in</a>
+        <button type="button" class="btn btn-light get-app" onclick="MoniInstall.show()">Get app</button>
         <a href="auth.html?mode=signup" class="btn btn-dark">Sign up free</a>
       </nav>
     </div>
@@ -37,6 +48,7 @@
             <a href="auth.html" class="btn btn-light">Log in</a>
           </div>
           <p class="note">Free to use. No card needed.</p>
+          <button type="button" class="app-link" onclick="MoniInstall.show()">📲 Get the app on your phone</button>
         </div>
 
         <div class="receipt" aria-label="Example of a week in MoniUsed">
@@ -193,10 +205,11 @@
   <footer class="site-footer">
     <div class="wrap">
       <span>© <span id="year"></span> MoniUsed</span>
-      <span>Made for Nigerians</span>
+      <span><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · Made for Nigerians</span>
     </div>
   </footer>
 
+  <script src="install.js"></script>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
