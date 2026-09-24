@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in — MoniUsed</title>
+  <meta name="theme-color" content="#f6c90e">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: var(--yellow); min-height: 100vh; }
+    .auth-page { display: flex; flex-direction: column; align-items: center; padding: 28px 20px 60px; }
+    .auth-page .logo { margin-bottom: 28px; }
+    .auth-card {
+      background: #fff; width: 100%; max-width: 420px;
+      border-radius: 16px; padding: 28px 24px;
+      box-shadow: 0 18px 40px rgba(60, 45, 0, .18);
+    }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 999px; padding: 4px; margin-bottom: 24px; }
+    .tabs button {
+      border: 0; background: transparent; padding: 10px; border-radius: 999px;
+      font-family: var(--body); font-size: 15px; font-weight: 700; color: var(--muted); cursor: pointer;
+    }
+    .tabs button.active { background: var(--ink); color: #fff; }
+    .auth-card h1 { font-size: 28px; margin-bottom: 6px; }
+    .auth-card .hint { color: var(--muted); margin-bottom: 20px; font-size: 15px; }
+    label { display: block; font-weight: 600; font-size: 15px; margin: 14px 0 6px; }
+    input {
+      width: 100%; padding: 13px 14px; font-size: 16px; font-family: var(--body);
+      border: 1.5px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+    }
+    input:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px rgba(11,93,69,.15); }
+    .pw-row { position: relative; }
+    .pw-row input { padding-right: 70px; }
+    .pw-toggle {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      border: 0; background: none; color: var(--green); font-weight: 700; font-size: 14px; cursor: pointer; padding: 6px;
+    }
+    .submit { width: 100%; margin-top: 22px; }
+    .submit:disabled { opacity: .6; cursor: wait; }
+    .msg { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; display: none; }
+    .msg.error { display: block; background: #fdecea; color: var(--red); }
+    .msg.ok { display: block; background: #e6f4ee; color: var(--green-dark); }
+    .small-link { text-align: center; margin-top: 18px; font-size: 15px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="auth-page">
+    <a href="/" class="logo">Moni<span>Used</span></a>
+
+    <div class="auth-card">
+      <div class="tabs" role="tablist">
+        <button type="button" id="tabLogin" class="active">Log in</button>
+        <button type="button" id="tabSignup">Sign up</button>
+      </div>
+
+      <!-- LOG IN -->
+      <div id="loginBox">
+        <h1>Welcome back</h1>
+        <p class="hint">Log in to see where your moni went.</p>
+
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="email" placeholder="you@example.com">
+
+        <label for="loginPassword">Password</label>
+        <div class="pw-row">
+          <input type="password" id="loginPassword" autocomplete="current-password">
+          <button type="button" class="pw-toggle" data-for="loginPassword">Show</button>
+        </div>
+
+        <button type="button" id="loginBtn" class="btn btn-dark submit">Log in</button>
+      </div>
+
+      <!-- SIGN UP -->
+      <div id="signupBox" class="hidden">
+        <h1>Create your account</h1>
+        <p class="hint">Free to use. Takes less than a minute.</p>
+
+        <label for="signupName">Your name</label>
+        <input type="text" id="signupName" autocomplete="name" placeholder="e.g. Tolu Adeyemi">
+
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" autocomplete="email" placeholder="you@example.com">
+
+        <label for="signupPassword">Password</label>
+        <div class="pw-row">
+          <input type="password" id="signupPassword" autocomplete="new-password" placeholder="At least 6 characters">
+          <button type="button" class="pw-toggle" data-for="signupPassword">Show</button>
+        </div>
+
+        <button type="button" id="signupBtn" class="btn btn-dark submit">Create account</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <p class="small-link"><a href="/">Back to homepage</a></p>
+  </div>
+
+  <!-- Supabase library, then your connection file -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
+  <script>
+    // ---------- Helpers ----------
+    const $ = (id) => document.getElementById(id);
+
+    function showMsg(text, type) {
+      const box = $('msg');
+      box.textContent = text;
+      box.className = 'msg ' + type;
+    }
+    function clearMsg() { $('msg').className = 'msg'; }
+
+    function friendlyError(error) {
+      const m = (error && error.message || '').toLowerCase();
+      if (m.includes('invalid login')) return 'Wrong email or password. Check them and try again.';
+      if (m.includes('already registered')) return 'This email already has an account. Log in instead.';
+      if (m.includes('password')) return 'Password must be at least 6 characters.';
+      if (m.includes('email')) return 'Enter a valid email address.';
+      if (m.includes('fetch')) return 'No internet connection. Check your network and try again.';
+      return error.message || 'Something went wrong. Try again.';
+    }
+
+    // ---------- Tabs ----------
+    function showTab(tab) {
+      const isSignup = tab === 'signup';
+      $('signupBox').classList.toggle('hidden', !isSignup);
+      $('loginBox').classList.toggle('hidden', isSignup);
+      $('tabSignup').classList.toggle('active', isSignup);
+      $('tabLogin').classList.toggle('active', !isSignup);
+      document.title = (isSignup ? 'Sign up' : 'Log in') + ' — MoniUsed';
+      clearMsg();
+    }
+    $('tabLogin').onclick = () => showTab('login');
+    $('tabSignup').onclick = () => showTab('signup');
+
+    // Open the Sign up tab if the link says ?mode=signup
+    if (new URLSearchParams(location.search).get('mode') === 'signup') showTab('signup');
+
+    // ---------- Show / hide password ----------
+    document.querySelectorAll('.pw-toggle').forEach(btn => {
+      btn.onclick = () => {
+        const input = $(btn.dataset.for);
+        const hidden = input.type === 'password';
+        input.type = hidden ? 'text' : 'password';
+        btn.textContent = hidden ? 'Hide' : 'Show';
+      };
+    });
+
+    // ---------- If already logged in, go straight to the dashboard ----------
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) location.href = 'dashboard.html';
+    });
+
+    // ---------- Log in ----------
+    async function logIn() {
+      clearMsg();
+      const email = $('loginEmail').value.trim();
+      const password = $('loginPassword').value;
+      if (!email || !password) return showMsg('Enter your email and password.', 'error');
+
+      const btn = $('loginBtn');
+      btn.disabled = true; btn.textContent = 'Logging in...';
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showMsg(friendlyError(error), 'error');
+        btn.disabled = false; btn.textContent = 'Log in';
+        return;
+      }
+      location.href = 'dashboard.html';
+    }
+    $('loginBtn').onclick = logIn;
+
+    // ---------- Sign up ----------
+    async function signUp() {
+      clearMsg();
+      const fullName = $('signupName').value.trim();
+      const email = $('signupEmail').value.trim();
+      const password = $('signupPassword').value;
+      if (!fullName) return showMsg('Enter your name.', 'error');
+      if (!email) return showMsg('Enter your email.', 'error');
+      if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'error');
+
+      const btn = $('signupBtn');
+      btn.disabled = true; btn.textContent = 'Creating account...';
+
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } }
+      });
+
+      if (error) {
+        showMsg(friendlyError(error), 'error');
+        btn.disabled = false; btn.textContent = 'Create account';
+        return;
+      }
+
+      if (data.session) {
+        // Logged in straight away (email confirmation is off)
+        location.href = 'dashboard.html';
+      } else {
+        // Email confirmation is on: user must check their inbox first
+        showMsg('Account created. Check your email to confirm it, then log in.', 'ok');
+        btn.disabled = false; btn.textContent = 'Create account';
+        showTab('login');
+        showMsg('Account created. Check your email to confirm it, then log in.', 'ok');
+      }
+    }
+    $('signupBtn').onclick = signUp;
+
+    // Press Enter to submit
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if ($('signupBox').classList.contains('hidden')) logIn(); else signUp();
+    });
+  </script>
+</body>
+</html>
