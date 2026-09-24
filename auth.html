@@ -49,6 +49,17 @@
     .agree { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; font-size: 14.5px; color: var(--muted); cursor: pointer; font-weight: 400; }
     .agree input { width: 20px; height: 20px; margin-top: 1px; flex: 0 0 auto; accent-color: var(--green); padding: 0; }
     .agree a { font-weight: 700; }
+    .code-input {
+      font-family: var(--head); font-size: 30px; font-weight: 800; letter-spacing: 10px;
+      text-align: center; padding: 12px 10px;
+    }
+    .code-input::placeholder { color: #c9cbc3; letter-spacing: 10px; }
+    .email-pill { display: inline-block; background: var(--soft); border-radius: 999px; padding: 4px 12px; font-weight: 700; color: var(--ink); word-break: break-all; }
+    .link-btn { background: none; border: 0; color: var(--green); font: 700 15px var(--body); cursor: pointer; padding: 6px 0; }
+    .link-btn:disabled { color: var(--muted); cursor: default; }
+    .row-links { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .forgot-row { text-align: right; margin-top: 8px; }
+    .big-icon { font-size: 40px; margin-bottom: 6px; }
     .legal-links { text-align: center; font-size: 13.5px; color: var(--muted); margin-top: 10px; }
   </style>
 </head>
@@ -75,8 +86,9 @@
           <input type="password" id="loginPassword" autocomplete="current-password">
           <button type="button" class="pw-toggle" data-for="loginPassword">Show</button>
         </div>
+        <div class="forgot-row"><button type="button" class="link-btn" id="forgotLink">Forgot password?</button></div>
 
-        <button type="button" id="loginBtn" class="btn btn-dark submit">Log in</button>
+        <button type="button" id="loginBtn" class="btn btn-dark submit" style="margin-top:14px">Log in</button>
       </div>
 
       <!-- SIGN UP -->
@@ -102,6 +114,58 @@
         </label>
 
         <button type="button" id="signupBtn" class="btn btn-dark submit">Create account</button>
+      </div>
+
+      <!-- ENTER CODE (after sign up) -->
+      <div id="verifyBox" class="hidden">
+        <div class="big-icon">📩</div>
+        <h1>Check your email</h1>
+        <p class="hint">We sent a 6-digit code to <span class="email-pill" id="verifyEmailShow"></span></p>
+
+        <label for="verifyCode">Enter the code</label>
+        <input type="text" id="verifyCode" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••">
+
+        <button type="button" id="verifyBtn" class="btn btn-dark submit">Confirm email</button>
+        <div class="row-links">
+          <button type="button" class="link-btn" id="verifyResend">Send a new code</button>
+          <button type="button" class="link-btn" data-back>Use a different email</button>
+        </div>
+        <p class="hint" style="margin:14px 0 0;font-size:13.5px">Can't find it? Check your Spam or Promotions folder.</p>
+      </div>
+
+      <!-- FORGOT PASSWORD: ask for email -->
+      <div id="forgotBox" class="hidden">
+        <div class="big-icon">🔑</div>
+        <h1>Reset your password</h1>
+        <p class="hint">Enter your email and we'll send you a code to set a new password.</p>
+
+        <label for="forgotEmail">Email</label>
+        <input type="email" id="forgotEmail" autocomplete="email" placeholder="you@example.com">
+
+        <button type="button" id="forgotBtn" class="btn btn-dark submit">Send code</button>
+        <div class="row-links"><button type="button" class="link-btn" data-back>‹ Back to log in</button></div>
+      </div>
+
+      <!-- RESET PASSWORD: code + new password -->
+      <div id="resetBox" class="hidden">
+        <div class="big-icon">📩</div>
+        <h1>Set a new password</h1>
+        <p class="hint">If <span class="email-pill" id="resetEmailShow"></span> has an account, we sent it a 6-digit code.</p>
+
+        <label for="resetCode">Enter the code</label>
+        <input type="text" id="resetCode" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••">
+
+        <label for="resetPassword">New password</label>
+        <div class="pw-row">
+          <input type="password" id="resetPassword" autocomplete="new-password" placeholder="At least 6 characters">
+          <button type="button" class="pw-toggle" data-for="resetPassword">Show</button>
+        </div>
+
+        <button type="button" id="resetBtn" class="btn btn-dark submit">Save new password</button>
+        <div class="row-links">
+          <button type="button" class="link-btn" id="resetResend">Send a new code</button>
+          <button type="button" class="link-btn" data-back>‹ Back to log in</button>
+        </div>
       </div>
 
       <div id="msg" class="msg"></div>
@@ -130,27 +194,38 @@
       const m = (error && error.message || '').toLowerCase();
       if (m.includes('invalid login')) return 'Wrong email or password. Check them and try again.';
       if (m.includes('already registered')) return 'This email already has an account. Log in instead.';
+      if (m.includes('expired') || m.includes('invalid') && m.includes('token')) return 'That code is wrong or has expired. Check it, or send a new code.';
+      if (m.includes('should be different')) return 'Your new password must be different from your old one.';
+      if (m.includes('rate limit') || m.includes('security purposes') || m.includes('too many')) return 'Please wait a minute before asking for another code.';
       if (m.includes('password')) return 'Password must be at least 6 characters.';
       if (m.includes('email')) return 'Enter a valid email address.';
       if (m.includes('fetch')) return 'No internet connection. Check your network and try again.';
       return error.message || 'Something went wrong. Try again.';
     }
 
-    // ---------- Tabs ----------
-    function showTab(tab) {
-      const isSignup = tab === 'signup';
-      $('signupBox').classList.toggle('hidden', !isSignup);
-      $('loginBox').classList.toggle('hidden', isSignup);
-      $('tabSignup').classList.toggle('active', isSignup);
-      $('tabLogin').classList.toggle('active', !isSignup);
-      document.title = (isSignup ? 'Sign up' : 'Log in') + ' — MoniUsed';
+    function busy(btn, text) { btn.dataset.label = btn.dataset.label || btn.textContent; btn.disabled = true; btn.textContent = text; }
+    function done(btn) { btn.disabled = false; btn.textContent = btn.dataset.label; }
+    const cleanCode = (v) => v.replace(/\D/g, '');
+
+    // ---------- Screens ----------
+    const BOXES = ['loginBox', 'signupBox', 'verifyBox', 'forgotBox', 'resetBox'];
+    function showView(name) {
+      BOXES.forEach(b => $(b).classList.toggle('hidden', b !== name + 'Box'));
+      const isTab = name === 'login' || name === 'signup';
+      document.querySelector('.tabs').classList.toggle('hidden', !isTab);
+      $('tabSignup').classList.toggle('active', name === 'signup');
+      $('tabLogin').classList.toggle('active', name === 'login');
+      document.title = ({ login: 'Log in', signup: 'Sign up', verify: 'Confirm email', forgot: 'Reset password', reset: 'Reset password' }[name]) + ' — MoniUsed';
       clearMsg();
+      window.scrollTo(0, 0);
     }
-    $('tabLogin').onclick = () => showTab('login');
-    $('tabSignup').onclick = () => showTab('signup');
+    function showTab(tab) { showView(tab); }
+    $('tabLogin').onclick = () => showView('login');
+    $('tabSignup').onclick = () => showView('signup');
+    document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showView('login'));
 
     // Open the Sign up tab if the link says ?mode=signup
-    if (new URLSearchParams(location.search).get('mode') === 'signup') showTab('signup');
+    if (new URLSearchParams(location.search).get('mode') === 'signup') showView('signup');
 
     // ---------- Show / hide password ----------
     document.querySelectorAll('.pw-toggle').forEach(btn => {
@@ -161,6 +236,19 @@
         btn.textContent = hidden ? 'Hide' : 'Show';
       };
     });
+
+    // ---------- "Send a new code" buttons wait 60 seconds ----------
+    function startCountdown(btn) {
+      let left = 60;
+      btn.disabled = true;
+      clearInterval(btn._timer);
+      const tick = () => {
+        btn.textContent = `Send a new code (${left}s)`;
+        if (left-- <= 0) { clearInterval(btn._timer); btn.disabled = false; btn.textContent = 'Send a new code'; }
+      };
+      tick();
+      btn._timer = setInterval(tick, 1000);
+    }
 
     // ---------- If already logged in, go straight to the dashboard ----------
     sb.auth.getSession().then(({ data }) => {
@@ -175,14 +263,18 @@
       if (!email || !password) return showMsg('Enter your email and password.', 'error');
 
       const btn = $('loginBtn');
-      btn.disabled = true; btn.textContent = 'Logging in...';
-
+      busy(btn, 'Logging in...');
       const { error } = await sb.auth.signInWithPassword({ email, password });
+      done(btn);
 
       if (error) {
-        showMsg(friendlyError(error), 'error');
-        btn.disabled = false; btn.textContent = 'Log in';
-        return;
+        if ((error.message || '').toLowerCase().includes('not confirmed')) {
+          // Account exists but email not confirmed yet: send a code
+          openVerify(email);
+          await sendSignupCode(email, true);
+          return;
+        }
+        return showMsg(friendlyError(error), 'error');
       }
       location.href = 'dashboard.html';
     }
@@ -200,7 +292,7 @@
       if (!$('agreeBox').checked) return showMsg('Please tick the box to agree to the Terms of Service and Privacy Policy.', 'error');
 
       const btn = $('signupBtn');
-      btn.disabled = true; btn.textContent = 'Creating account...';
+      busy(btn, 'Creating account...');
 
       const { data, error } = await sb.auth.signUp({
         email,
@@ -211,30 +303,136 @@
           terms_version: '2026-09-24'
         } }
       });
+      done(btn);
 
-      if (error) {
-        showMsg(friendlyError(error), 'error');
-        btn.disabled = false; btn.textContent = 'Create account';
-        return;
+      if (error) return showMsg(friendlyError(error), 'error');
+
+      // This email already has a confirmed account
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        showView('login');
+        $('loginEmail').value = email;
+        return showMsg('This email already has an account. Log in instead.', 'error');
       }
 
       if (data.session) {
-        // Logged in straight away (email confirmation is off)
-        location.href = 'dashboard.html';
+        location.href = 'dashboard.html';   // email codes are switched off
       } else {
-        // Email confirmation is on: user must check their inbox first
-        showMsg('Account created. Check your email to confirm it, then log in.', 'ok');
-        btn.disabled = false; btn.textContent = 'Create account';
-        showTab('login');
-        showMsg('Account created. Check your email to confirm it, then log in.', 'ok');
+        openVerify(email);                    // a code was emailed
+        startCountdown($('verifyResend'));
       }
     }
     $('signupBtn').onclick = signUp;
 
+    // ---------- Confirm email with a code ----------
+    let verifyEmail = '';
+    function openVerify(email) {
+      verifyEmail = email;
+      $('verifyEmailShow').textContent = email;
+      $('verifyCode').value = '';
+      showView('verify');
+      $('verifyCode').focus();
+    }
+
+    async function sendSignupCode(email, quiet) {
+      const { error } = await sb.auth.resend({ type: 'signup', email });
+      startCountdown($('verifyResend'));
+      if (error) showMsg(friendlyError(error), 'error');
+      else if (!quiet) showMsg('New code sent. Check your email.', 'ok');
+      else showMsg('Your email isn\'t confirmed yet. We sent you a code.', 'ok');
+    }
+    $('verifyResend').onclick = () => sendSignupCode(verifyEmail);
+
+    async function verifySignup() {
+      clearMsg();
+      const token = cleanCode($('verifyCode').value);
+      if (token.length < 6) return showMsg('Enter the 6-digit code from your email.', 'error');
+
+      const btn = $('verifyBtn');
+      busy(btn, 'Checking...');
+      let { error } = await sb.auth.verifyOtp({ email: verifyEmail, token, type: 'email' });
+      if (error) ({ error } = await sb.auth.verifyOtp({ email: verifyEmail, token, type: 'signup' }));
+      done(btn);
+
+      if (error) return showMsg(friendlyError(error), 'error');
+      showMsg('Email confirmed ✓ Opening MoniUsed...', 'ok');
+      location.href = 'dashboard.html';
+    }
+    $('verifyBtn').onclick = verifySignup;
+    $('verifyCode').oninput = () => {
+      const v = cleanCode($('verifyCode').value);
+      $('verifyCode').value = v;
+      if (v.length === 6) verifySignup();
+    };
+
+    // ---------- Forgot password ----------
+    let resetEmail = '';
+    let resetVerified = false;
+    $('forgotLink').onclick = () => {
+      $('forgotEmail').value = $('loginEmail').value.trim();
+      showView('forgot');
+      $('forgotEmail').focus();
+    };
+
+    async function sendResetCode(email) {
+      const { error } = await sb.auth.resetPasswordForEmail(email);
+      if (error) { showMsg(friendlyError(error), 'error'); return false; }
+      startCountdown($('resetResend'));
+      return true;
+    }
+
+    $('forgotBtn').onclick = async () => {
+      clearMsg();
+      const email = $('forgotEmail').value.trim();
+      if (!email || !email.includes('@')) return showMsg('Enter your email address.', 'error');
+      const btn = $('forgotBtn');
+      busy(btn, 'Sending...');
+      const ok = await sendResetCode(email);
+      done(btn);
+      if (!ok) return;
+      resetEmail = email;
+      resetVerified = false;
+      $('resetEmailShow').textContent = email;
+      $('resetCode').value = '';
+      $('resetPassword').value = '';
+      showView('reset');
+      $('resetCode').focus();
+    };
+
+    $('resetResend').onclick = async () => {
+      if (await sendResetCode(resetEmail)) showMsg('New code sent. Check your email.', 'ok');
+    };
+    $('resetCode').oninput = () => { $('resetCode').value = cleanCode($('resetCode').value); };
+
+    $('resetBtn').onclick = async () => {
+      clearMsg();
+      const token = cleanCode($('resetCode').value);
+      const password = $('resetPassword').value;
+      if (!resetVerified && token.length < 6) return showMsg('Enter the 6-digit code from your email.', 'error');
+      if (password.length < 6) return showMsg('New password must be at least 6 characters.', 'error');
+
+      const btn = $('resetBtn');
+      busy(btn, 'Saving...');
+
+      if (!resetVerified) {
+        const { error } = await sb.auth.verifyOtp({ email: resetEmail, token, type: 'recovery' });
+        if (error) { done(btn); return showMsg(friendlyError(error), 'error'); }
+        resetVerified = true;   // code accepted; don't ask for it again
+      }
+
+      const { error } = await sb.auth.updateUser({ password });
+      done(btn);
+      if (error) return showMsg(friendlyError(error), 'error');
+
+      showMsg('Password changed ✓ Opening MoniUsed...', 'ok');
+      setTimeout(() => location.href = 'dashboard.html', 900);
+    };
+
     // Press Enter to submit
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
-      if ($('signupBox').classList.contains('hidden')) logIn(); else signUp();
+      const open = BOXES.find(b => !$(b).classList.contains('hidden'));
+      ({ loginBox: logIn, signupBox: signUp, verifyBox: verifySignup,
+         forgotBox: () => $('forgotBtn').click(), resetBox: () => $('resetBtn').click() }[open] || (() => {}))();
     });
   </script>
 </body>
