@@ -3,9 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MoniUsed</title>
+  <title>MoniUsed — See where your moni went</title>
+  <meta name="description" content="MoniUsed is a free expense tracker for Nigerians. Record your income and spending in Naira and see where your money goes every month.">
+  <meta name="theme-color" content="#f6c90e">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>MoniUsed is coming soon 🚀</h1>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="/" class="logo">Moni<span>Used</span></a>
+      <nav class="nav">
+        <a href="auth.html" class="link">Log in</a>
+        <a href="auth.html?mode=signup" class="btn btn-dark">Sign up free</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap">
+        <div>
+          <h1>See where your moni went.</h1>
+          <p class="lead">Record what comes in and what goes out, in Naira. MoniUsed adds it up so month-end never surprises you again.</p>
+          <div class="actions">
+            <a href="auth.html?mode=signup" class="btn btn-dark">Create free account</a>
+            <a href="auth.html" class="btn btn-light">Log in</a>
+          </div>
+          <p class="note">Free to use. No card needed.</p>
+        </div>
+
+        <div class="receipt" aria-label="Example of a week in MoniUsed">
+          <h3>This week</h3>
+          <p class="sub">Example entries</p>
+          <ul>
+            <li><span>Salary<small>Income · Mon</small></span><span class="amt in">+₦250,000</span></li>
+            <li><span>Rent contribution<small>Housing · Mon</small></span><span class="amt out">−₦80,000</span></li>
+            <li><span>Market shopping<small>Food · Tue</small></span><span class="amt out">−₦21,000</span></li>
+            <li><span>Bolt rides<small>Transport · Wed</small></span><span class="amt out">−₦12,500</span></li>
+            <li><span>MTN data<small>Data &amp; airtime · Thu</small></span><span class="amt out">−₦5,000</span></li>
+            <li><span>Suya with the guys<small>Outings · Fri</small></span><span class="amt out">−₦4,000</span></li>
+          </ul>
+          <div class="totals">
+            <div>In<strong>₦250,000</strong></div>
+            <div>Out<strong>₦122,500</strong></div>
+            <div class="left">Left<strong>₦127,500</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="block">
+      <div class="wrap">
+        <h2>How MoniUsed works</h2>
+        <p class="intro">Three simple habits. A few seconds a day.</p>
+        <ol class="steps">
+          <li>
+            <h3>Create your account</h3>
+            <p>Sign up with your email and a password. That's all.</p>
+          </li>
+          <li>
+            <h3>Record as you go</h3>
+            <p>Add each income or expense: what it was, how much, the category and the date.</p>
+          </li>
+          <li>
+            <h3>See the full picture</h3>
+            <p>Your monthly totals, what's left, and which categories take the most of your moni.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="block features-area">
+      <div class="wrap">
+        <h2>Everything you need, nothing you don't</h2>
+        <p class="intro">Built for how Nigerians actually spend: transport, data, food, bills and family.</p>
+        <div class="features">
+          <div class="feature">
+            <h3>Income and expenses</h3>
+            <p>Track salary, side hustle and gifts alongside everything you spend.</p>
+          </div>
+          <div class="feature">
+            <h3>Naira first</h3>
+            <p>Every amount is in ₦, formatted the way you read it.</p>
+          </div>
+          <div class="feature">
+            <h3>Categories that make sense</h3>
+            <p>Food, transport, data &amp; airtime, bills, rent, family support and more.</p>
+          </div>
+          <div class="feature">
+            <h3>Monthly totals</h3>
+            <p>See money in, money out, and what's left, for any month.</p>
+          </div>
+          <div class="feature">
+            <h3>Works on your phone</h3>
+            <p>Add MoniUsed to your home screen and open it like an app. No app store needed.</p>
+          </div>
+          <div class="feature">
+            <h3>Edit anytime</h3>
+            <p>Made a mistake? Change or delete any entry in one tap.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section class="block">
+      <div class="wrap privacy">
+        <h2>Your records stay yours</h2>
+        <div>
+          <p>Each entry is locked to the account that created it. No other user can see, change or delete your records.</p>
+          <p>Our admin tools only show app-wide numbers, like how many people use MoniUsed. They don't show anyone's personal entries.</p>
+          <p>MoniUsed is a record-keeping tool. It does not hold, send or receive money, and it is not a bank.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="cta-band">
+      <div class="wrap">
+        <h2>Know where your moni goes.</h2>
+        <p>Start tracking today. It's free.</p>
+        <a href="auth.html?mode=signup" class="btn btn-dark">Create free account</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© <span id="year"></span> MoniUsed</span>
+      <span>Made for Nigerians</span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
