@@ -48,11 +48,20 @@
     .muted { color: var(--muted); }
     .empty { text-align: center; color: var(--muted); padding: 30px; }
     .note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+    .plan-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: -16px 0 28px; }
+    .plan-stat { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .plan-stat span { font-weight: 700; }
+    .plan-stat strong { font-family: var(--head); font-size: 26px; font-variant-numeric: tabular-nums; }
+    .plan-stat.premium { background: var(--ink); color: var(--yellow); border-color: var(--ink); }
+    .plan-select { padding: 6px 8px; font-size: 14px; font-family: var(--body); border: 1.5px solid var(--line); border-radius: 8px; background: #fff; }
+    .plan-select:disabled { opacity: .5; }
+    .flash { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 600; display: none; z-index: 10; }
 
     @media (max-width: 800px) {
       .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
       .stat { padding: 14px 12px; }
       .stat strong { font-size: 26px; }
+      .plan-stats { grid-template-columns: 1fr; gap: 8px; }
       h1 { font-size: 28px; }
     }
   </style>
@@ -79,6 +88,12 @@
       <div class="stat"><span>Entries recorded</span><strong id="sEntries">–</strong><small id="sEntries7">All time</small></div>
     </div>
 
+    <div class="plan-stats">
+      <div class="plan-stat"><span>Starter</span><strong id="sPlanStarter">–</strong></div>
+      <div class="plan-stat"><span>Plus</span><strong id="sPlanPlus">–</strong></div>
+      <div class="plan-stat premium"><span>Premium</span><strong id="sPlanPremium">–</strong></div>
+    </div>
+
     <section class="panel">
       <div class="panel-top">
         <h2>Users</h2>
@@ -91,17 +106,19 @@
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Plan</th>
               <th>Joined</th>
               <th>Entries</th>
               <th>Last active</th>
             </tr>
           </thead>
-          <tbody id="userRows"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+          <tbody id="userRows"><tr><td colspan="7" class="empty">Loading...</td></tr></tbody>
         </table>
       </div>
-      <p class="note">"Active" means the user added an entry in that period. Admins can't see anyone's amounts or entry details.</p>
+      <p class="note">"Active" means the user added an entry in that period. Admins can't see anyone's amounts or entry details. Changing a plan here gives that user the plan for free (for testers and early supporters).</p>
     </section>
   </main>
+  <div class="flash" id="flash" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -141,6 +158,9 @@
       $('sActive30').textContent = 'Last 7 days · ' + num(data.active_users_30d) + ' in 30 days';
       $('sEntries').textContent = num(data.total_entries);
       $('sEntries7').textContent = 'All time · ' + num(data.entries_7d) + ' this week';
+      $('sPlanStarter').textContent = num(data.plan_starter);
+      $('sPlanPlus').textContent = num(data.plan_plus);
+      $('sPlanPremium').textContent = num(data.plan_premium);
 
       $('updated').textContent = 'Updated ' + new Date().toLocaleString('en-NG', {
         day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'
@@ -150,7 +170,7 @@
     async function loadUsers() {
       const { data, error } = await sb.rpc('admin_users');
       if (error) {
-        $('userRows').innerHTML = '<tr><td colspan="6" class="empty">Could not load users. Refresh to try again.</td></tr>';
+        $('userRows').innerHTML = '<tr><td colspan="7" class="empty">Could not load users. Refresh to try again.</td></tr>';
         return;
       }
       users = data;
@@ -163,7 +183,7 @@
         !q || (u.email || '').toLowerCase().includes(q) || (u.full_name || '').toLowerCase().includes(q));
 
       if (list.length === 0) {
-        $('userRows').innerHTML = `<tr><td colspan="6" class="empty">${q ? 'No users match your search.' : 'No users yet.'}</td></tr>`;
+        $('userRows').innerHTML = `<tr><td colspan="7" class="empty">${q ? 'No users match your search.' : 'No users yet.'}</td></tr>`;
         return;
       }
 
@@ -172,6 +192,12 @@
           <td>${escapeHtml(u.full_name) || '<span class="muted">No name</span>'}</td>
           <td>${escapeHtml(u.email)}</td>
           <td><span class="role ${u.role === 'admin' ? 'admin' : ''}">${escapeHtml(u.role)}</span></td>
+          <td>
+            <select class="plan-select" data-id="${u.id}" aria-label="Plan for ${escapeHtml(u.email)}">
+              ${['starter', 'plus', 'premium'].map(p =>
+                `<option value="${p}" ${u.plan === p ? 'selected' : ''}>${p[0].toUpperCase() + p.slice(1)}</option>`).join('')}
+            </select>
+          </td>
           <td>${niceDate(u.joined)}</td>
           <td class="num">${num(u.entries)}</td>
           <td>${niceDate(u.last_active)}</td>
@@ -179,6 +205,30 @@
     }
 
     $('search').oninput = renderUsers;
+
+    function flash(text) {
+      const f = $('flash');
+      f.textContent = text; f.style.display = 'block';
+      clearTimeout(f._t); f._t = setTimeout(() => f.style.display = 'none', 2500);
+    }
+
+    // Change a user's plan
+    $('userRows').addEventListener('change', async (e) => {
+      const sel = e.target.closest('.plan-select');
+      if (!sel) return;
+      const u = users.find(x => x.id === sel.dataset.id);
+      const newPlan = sel.value;
+      const label = newPlan[0].toUpperCase() + newPlan.slice(1);
+      if (!confirm(`Change ${u.full_name || u.email} to the ${label} plan?`)) { sel.value = u.plan; return; }
+
+      sel.disabled = true;
+      const { error } = await sb.rpc('admin_set_plan', { target_user: u.id, new_plan: newPlan });
+      sel.disabled = false;
+      if (error) { sel.value = u.plan; flash('Could not change plan. Try again.'); return; }
+      u.plan = newPlan;
+      flash(`${u.full_name || u.email} is now on ${label} ✓`);
+      loadStats();
+    });
 
     $('logoutBtn').onclick = async () => {
       await sb.auth.signOut();

@@ -218,6 +218,50 @@
     .set-icon { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; flex: 0 0 auto; }
     .version { text-align: center; color: var(--muted); font-size: 13px; margin: 18px 0 8px; }
 
+    /* ---------- Plans ---------- */
+    .plan-badge {
+      display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+      background: var(--soft); color: var(--ink); margin-top: 6px;
+    }
+    .plan-badge.plus { background: #e6f4ee; color: var(--green-dark); }
+    .plan-badge.premium { background: var(--ink); color: var(--yellow); }
+    .back-link { display: inline-block; font-weight: 700; text-decoration: none; margin-bottom: 10px; }
+    .plans-intro { color: var(--muted); margin: 6px 0 16px; }
+    .billing-toggle { display: inline-grid; grid-template-columns: 1fr 1fr; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-bottom: 18px; }
+    .billing-toggle button { border: 0; background: none; padding: 9px 16px; border-radius: 999px; font-family: var(--body); font-weight: 700; font-size: 14px; color: var(--muted); cursor: pointer; }
+    .billing-toggle button.on { background: var(--ink); color: #fff; }
+    .billing-toggle small { font-weight: 600; color: var(--green); }
+    .billing-toggle button.on small { color: var(--yellow); }
+    .plan-card { background: #fff; border: 1.5px solid var(--line); border-radius: 20px; padding: 20px; margin-bottom: 14px; position: relative; }
+    .plan-card.featured { border-color: var(--green); box-shadow: 0 0 0 1px var(--green) inset; }
+    .plan-card.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .plan-card .ribbon {
+      position: absolute; top: 18px; right: 18px; font-size: 12px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px; background: var(--yellow); color: var(--ink);
+    }
+    .plan-card h2 { font-size: 22px; margin-bottom: 2px; }
+    .plan-card .tagline { color: var(--muted); font-size: 15px; }
+    .plan-card.dark .tagline { color: #c9ccc2; }
+    .pl-price { margin: 14px 0 4px; }
+    .pl-price strong { font-family: var(--head); font-size: 34px; letter-spacing: -0.5px; }
+    .pl-price span { color: var(--muted); font-size: 15px; }
+    .plan-card.dark .pl-price span { color: #c9ccc2; }
+    .plan-sub { font-size: 13.5px; color: var(--muted); min-height: 1.2em; }
+    .plan-card.dark .plan-sub { color: #c9ccc2; }
+    .plan-feats { list-style: none; margin: 14px 0 18px; }
+    .plan-feats li { padding: 6px 0 6px 28px; position: relative; font-size: 15px; }
+    .plan-feats li::before {
+      content: "✓"; position: absolute; left: 0; top: 6px; width: 20px; height: 20px; border-radius: 50%;
+      background: #e6f4ee; color: var(--green); font-size: 12px; font-weight: 800; display: grid; place-items: center;
+    }
+    .plan-card.dark .plan-feats li::before { background: rgba(246,201,14,.2); color: var(--yellow); }
+    .plan-btn { width: 100%; }
+    .plan-btn:disabled { cursor: default; opacity: 1; }
+    .plan-btn.locked { background: var(--soft); color: var(--muted); border-color: var(--soft); }
+    .plan-card.dark .plan-btn.locked { background: rgba(255,255,255,.1); color: #c9ccc2; border-color: transparent; }
+    .plan-btn.current { background: #fff; color: var(--green); border-color: var(--green); }
+    .plans-note { color: var(--muted); font-size: 13.5px; text-align: center; margin: 6px 10px 10px; }
+
     /* ---------- Notifications ---------- */
     .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .sheet-head h2 { margin: 0; }
@@ -415,7 +459,8 @@
       <div style="min-width:0">
         <h2 id="pName">–</h2>
         <p id="pEmail">–</p>
-        <small id="pSince"></small>
+        <small id="pSince"></small><br>
+        <a href="#plans" class="plan-badge" id="pPlanBadge" style="text-decoration:none">Starter</a>
       </div>
     </section>
 
@@ -423,6 +468,14 @@
       <div><strong id="stEntries">–</strong><span>Entries</span></div>
       <div><strong id="stDays">–</strong><span>Days tracked</span></div>
       <div><strong id="stStreak">–</strong><span>Day streak</span></div>
+    </div>
+
+    <p class="group-label">Plan</p>
+    <div class="settings">
+      <a href="#plans" class="set-row">
+        <span class="set-icon" style="background:#0b5d4526">⭐</span><span class="grow">Plans</span>
+        <span class="value" id="pPlanValue">Starter</span><span class="chev">›</span>
+      </a>
     </div>
 
     <p class="group-label">Account</p>
@@ -465,7 +518,22 @@
       </button>
     </div>
 
-    <p class="version">MoniUsed v1.1</p>
+    <p class="version">MoniUsed v1.2</p>
+  </main>
+
+  <!-- ================= PLANS ================= -->
+  <main class="wrap view hidden" id="view-plans">
+    <a href="#profile" class="back-link">‹ Profile</a>
+    <h1>Plans</h1>
+    <p class="plans-intro">Start free. Plus and Premium are coming soon. Nothing is charged today.</p>
+
+    <div class="billing-toggle" role="group" aria-label="Billing period">
+      <button type="button" id="billMonthly" class="on" aria-pressed="true">Monthly</button>
+      <button type="button" id="billYearly" aria-pressed="false">Yearly <small>2 months free</small></button>
+    </div>
+
+    <div id="planCards"></div>
+    <p class="plans-note">Paid plans will support card, bank transfer and USSD. You'll always be able to stay on Starter for free.</p>
   </main>
 
   <!-- ================= NOTIFICATIONS ================= -->
@@ -545,6 +613,24 @@
       ]
     };
     const TABS = ['home', 'entries', 'insights', 'profile'];
+    const EXTRA_VIEWS = { plans: 'profile' };   // extra pages, and which tab stays lit
+
+    // Plans: change prices and benefits here
+    const PLANS = [
+      { id: 'starter', name: 'Starter', tagline: 'Everything you need to track your moni',
+        monthly: 0, yearly: 0,
+        feats: ['Unlimited income & expense entries', 'All standard categories', 'Home balance & Add again',
+                'Insights & spending chart', 'Smart notifications & streaks', 'Installable app'] },
+      { id: 'plus', name: 'Plus', tagline: 'Take control of your spending',
+        monthly: 1000, yearly: 10000, featured: true,
+        feats: ['Everything in Starter', 'Monthly budgets with alerts', 'Savings goals (up to 3)',
+                'Recurring entries (rent, salary)', 'Custom categories (up to 10)', 'Full history & export to Excel'] },
+      { id: 'premium', name: 'Premium', tagline: 'The full picture of your money',
+        monthly: 2500, yearly: 25000, dark: true,
+        feats: ['Everything in Plus', 'Multiple wallets (cash, bank, Opay…)', 'Monthly PDF statements',
+                'Yearly summary', 'Business mode for side hustles', 'Receipt photos', 'Unlimited goals & categories', 'Priority support'] }
+    ];
+    const PLAN_NAMES = { starter: 'Starter', plus: 'Plus', premium: 'Premium' };
 
     // ================= HELPERS =================
     const $ = (id) => document.getElementById(id);
@@ -624,14 +710,17 @@
     let profileName = '';
     let profileCreated = null;
     let notifications = [];
+    let currentPlan = 'starter';
+    let billing = 'monthly';
 
     // ================= TABS =================
     function showTab() {
       let tab = location.hash.replace('#', '');
-      if (!TABS.includes(tab)) tab = 'home';
-      TABS.forEach(t => $('view-' + t).classList.toggle('hidden', t !== tab));
+      if (!TABS.includes(tab) && !EXTRA_VIEWS[tab]) tab = 'home';
+      [...TABS, ...Object.keys(EXTRA_VIEWS)].forEach(t => $('view-' + t).classList.toggle('hidden', t !== tab));
+      const litTab = EXTRA_VIEWS[tab] || tab;
       document.querySelectorAll('.tabbar a').forEach(a => {
-        const on = a.dataset.tab === tab;
+        const on = a.dataset.tab === litTab;
         a.classList.toggle('active', on);
         if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
       });
@@ -647,7 +736,7 @@
       showTab();
 
       const { data: profile } = await sb.from('profiles')
-        .select('full_name, role, created_at').eq('id', user.id).single();
+        .select('full_name, role, created_at, plan').eq('id', user.id).single();
 
       profileName = (profile && profile.full_name) || '';
       profileCreated = (profile && profile.created_at) || user.created_at;
@@ -657,6 +746,9 @@
         .toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' });
 
       if (profile && profile.role === 'admin') addAdminSection();
+
+      currentPlan = (profile && profile.plan) || 'starter';
+      showPlan();
 
       setMonth(thisMonth());
       loadHome();
@@ -749,6 +841,55 @@
           ${iconHtml(e.type, e.category)}${escapeHtml(e.title)}
         </button>`).join('');
     }
+
+    // ================= PLANS =================
+    function showPlan() {
+      const name = PLAN_NAMES[currentPlan] || 'Starter';
+      $('pPlanBadge').textContent = name + ' plan';
+      $('pPlanBadge').className = 'plan-badge ' + currentPlan;
+      $('pPlanValue').textContent = name;
+      renderPlans();
+    }
+
+    function renderPlans() {
+      const yearly = billing === 'yearly';
+      $('planCards').innerHTML = PLANS.map(pl => {
+        const isCurrent = pl.id === currentPlan;
+        const free = pl.monthly === 0;
+        const price = free ? '₦0' : naira(yearly ? pl.yearly : pl.monthly);
+        const per = free ? 'free forever' : (yearly ? '/year' : '/month');
+        const sub = free ? 'No card needed'
+          : yearly ? `That's ${naira(Math.round(pl.yearly / 12))}/month` : `or ${naira(pl.yearly)}/year`;
+        const ribbon = isCurrent && !free ? 'Early access'
+          : !free ? 'Coming soon' : '';
+        const btn = isCurrent
+          ? '<button type="button" class="btn plan-btn current" disabled>✓ Your current plan</button>'
+          : free
+            ? '<button type="button" class="btn plan-btn locked" disabled>Included free</button>'
+            : '<button type="button" class="btn plan-btn locked" disabled>Coming soon</button>';
+        return `
+          <section class="plan-card ${pl.featured ? 'featured' : ''} ${pl.dark ? 'dark' : ''}">
+            ${ribbon ? `<span class="ribbon">${ribbon}</span>` : ''}
+            <h2>${pl.name}</h2>
+            <p class="tagline">${pl.tagline}</p>
+            <p class="pl-price"><strong>${price}</strong> <span>${per}</span></p>
+            <p class="plan-sub">${sub}</p>
+            <ul class="plan-feats">${pl.feats.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+            ${btn}
+          </section>`;
+      }).join('');
+    }
+
+    function setBilling(b) {
+      billing = b;
+      $('billMonthly').classList.toggle('on', b === 'monthly');
+      $('billYearly').classList.toggle('on', b === 'yearly');
+      $('billMonthly').setAttribute('aria-pressed', b === 'monthly');
+      $('billYearly').setAttribute('aria-pressed', b === 'yearly');
+      renderPlans();
+    }
+    $('billMonthly').onclick = () => setBilling('monthly');
+    $('billYearly').onclick = () => setBilling('yearly');
 
     // ================= NOTIFICATIONS =================
     function buildNotifications(list, s, lastOut, lastName, month) {
