@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard — MoniUsed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MoniUsed</title>
   <meta name="theme-color" content="#f6c90e">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
@@ -11,53 +11,81 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <style>
-    body { background: var(--soft); }
+    body { background: var(--soft); padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+
+    /* Header */
     .dash-header { background: var(--yellow); }
     .dash-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; padding-bottom: 14px; }
     .dash-header .logo { font-size: 22px; }
-    .user-area { display: flex; align-items: center; gap: 12px; font-weight: 600; }
-    .user-area .btn { padding: 8px 16px; font-size: 14px; }
-    .hidden { display: none !important; }
 
-    .top-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin: 28px 0 20px; }
-    .top-row h1 { font-size: 34px; letter-spacing: -0.5px; }
+    /* Tab bar: bottom of screen on phones */
+    .tabbar {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+      background: #fff; border-top: 1px solid var(--line);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .tabbar a {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 9px 4px 8px; font-size: 12px; font-weight: 600;
+      color: var(--muted); text-decoration: none;
+    }
+    .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tabbar a.active { color: var(--green); }
+    .tabbar a.active svg { stroke-width: 2.5; }
+
+    /* Pages */
+    .view { padding-top: 24px; padding-bottom: 40px; }
+    .top-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .top-row h1, .view h1 { font-size: 32px; letter-spacing: -0.5px; }
     .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
     input, select {
       padding: 11px 12px; font-size: 16px; font-family: var(--body); color: var(--ink);
       border: 1.5px solid var(--line); border-radius: 10px; background: #fff; width: 100%;
     }
     input:focus, select:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px rgba(11,93,69,.15); }
-    #month { width: auto; }
+    input[type="month"] { width: auto; }
 
     /* Totals */
-    .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-    .total { background: #fff; border-radius: var(--radius); padding: 18px; border: 1px solid var(--line); }
+    .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .total { background: #fff; border-radius: var(--radius); padding: 16px; border: 1px solid var(--line); }
     .total span { color: var(--muted); font-size: 14px; font-weight: 600; }
-    .total strong { display: block; font-family: var(--head); font-size: clamp(20px, 3.4vw, 30px); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .total strong { display: block; font-family: var(--head); font-size: clamp(19px, 3.4vw, 30px); margin-top: 4px; font-variant-numeric: tabular-nums; }
     .total.left { background: var(--ink); color: #fff; border-color: var(--ink); }
     .total.left span { color: #c9ccc2; }
     .total.left strong.neg { color: #ff9a8f; }
     .in-text { color: var(--green); }
 
-    /* Main layout */
-    .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: start; padding-bottom: 60px; }
-    .panel { background: #fff; border-radius: var(--radius); border: 1px solid var(--line); padding: 20px; }
-    .panel h2 { font-size: 20px; margin-bottom: 12px; }
+    .add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .add-row .btn { font-size: 16px; padding: 14px 10px; text-align: center; }
+    .btn-income { background: #fff; color: var(--green); border-color: var(--green); }
+    .btn-income:hover { background: #e6f4ee; }
+    .controls .btn { padding: 10px 16px; font-size: 15px; }
 
+    .panel { background: #fff; border-radius: var(--radius); border: 1px solid var(--line); padding: 20px; margin-bottom: 18px; }
+    .panel h2 { font-size: 20px; margin-bottom: 10px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .panel-head a { font-weight: 700; text-decoration: none; font-size: 15px; }
+
+    /* Entry list */
     .entries { list-style: none; }
-    .entries li button {
+    .entry-row {
       width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
       padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--soft);
       font-family: var(--body); font-size: 16px; color: var(--ink); text-align: left; cursor: pointer;
     }
-    .entries li button:hover { background: var(--soft); }
+    .entry-row:hover { background: var(--soft); }
     .entries small { display: block; color: var(--muted); font-size: 13px; }
     .amt { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .amt.in { color: var(--green); }
-
-    .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+    .empty { text-align: center; color: var(--muted); padding: 26px 10px; }
     .empty .btn { margin-top: 14px; }
+    .month-summary { color: var(--muted); font-size: 15px; margin-bottom: 6px; }
 
+    /* Category bars */
     .bar-row { margin-bottom: 14px; }
     .bar-label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 5px; }
     .bar-label span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -65,7 +93,17 @@
     .bar div { height: 100%; background: var(--green); border-radius: 999px; }
     .bar-pct { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 
-    /* Add / edit form (popup) */
+    /* Profile */
+    .info-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--soft); }
+    .info-row:last-child { border-bottom: 0; }
+    .info-row span:first-child { color: var(--muted); }
+    .info-row span:last-child { font-weight: 600; text-align: right; word-break: break-all; }
+    .panel p { color: var(--muted); margin-bottom: 10px; }
+    .panel p strong { color: var(--ink); }
+    .logout { width: 100%; color: var(--red); border-color: var(--red); }
+    .logout:hover { background: #fdecea; }
+
+    /* Add / edit popup */
     dialog { border: 0; border-radius: 16px; padding: 24px; width: min(440px, calc(100% - 24px)); margin: auto; color: var(--ink); }
     dialog::backdrop { background: rgba(20, 20, 15, .55); }
     dialog h2 { font-size: 24px; margin-bottom: 14px; }
@@ -80,66 +118,149 @@
     .btn-delete { background: none; border: 0; color: var(--red); font-weight: 700; margin-top: 14px; cursor: pointer; font-size: 15px; width: 100%; padding: 8px; }
     .form-msg { color: var(--red); font-size: 14px; margin-top: 10px; min-height: 1em; }
 
+    /* Computers: tabs move to the top under the header */
+    @media (min-width: 801px) {
+      body { padding-bottom: 0; }
+      .tabbar {
+        position: sticky; top: 0; bottom: auto;
+        border-top: 0; border-bottom: 1px solid var(--line);
+        grid-template-columns: repeat(4, auto); justify-content: center; gap: 6px; padding: 0;
+      }
+      .tabbar a { flex-direction: row; gap: 8px; font-size: 15px; padding: 14px 18px; }
+      .tabbar svg { width: 20px; height: 20px; }
+      .tabbar a.active { box-shadow: inset 0 -3px 0 var(--green); }
+      .view { max-width: 760px; }
+      .add-row { max-width: 460px; }
+    }
     @media (max-width: 800px) {
-      .grid { grid-template-columns: 1fr; }
-      .totals { gap: 8px; }
-      .total { padding: 14px 12px; }
-      .top-row h1 { font-size: 28px; }
-      #hello { display: none; }
+      .total { padding: 13px 11px; }
+      .top-row h1, .view h1 { font-size: 28px; }
     }
   </style>
 </head>
 <body>
   <header class="dash-header">
     <div class="wrap">
-      <a href="dashboard.html" class="logo">Moni<span>Used</span></a>
-      <div class="user-area">
-        <span id="hello"></span>
-        <a href="admin.html" id="adminLink" class="btn btn-light hidden">Admin</a>
-        <button type="button" id="logoutBtn" class="btn btn-light">Log out</button>
-      </div>
+      <a href="#home" class="logo">Moni<span>Used</span></a>
     </div>
   </header>
 
-  <main class="wrap">
+  <!-- TAB BAR -->
+  <nav class="tabbar" aria-label="Main">
+    <a href="#home" data-tab="home">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      Home
+    </a>
+    <a href="#entries" data-tab="entries">
+      <svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+      Entries
+    </a>
+    <a href="#insights" data-tab="insights">
+      <svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>
+      Insights
+    </a>
+    <a href="#profile" data-tab="profile">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+      Profile
+    </a>
+  </nav>
+
+  <!-- HOME -->
+  <main class="wrap view" id="view-home">
+    <h1 id="greet">Hi there</h1>
+    <p class="muted" id="homeMonth" style="margin-bottom:16px"></p>
+
+    <div class="totals">
+      <div class="total"><span>Money in</span><strong id="homeIn" class="in-text">₦0</strong></div>
+      <div class="total"><span>Money out</span><strong id="homeOut">₦0</strong></div>
+      <div class="total left"><span>Left</span><strong id="homeLeft">₦0</strong></div>
+    </div>
+
+    <div class="add-row">
+      <button type="button" class="btn btn-dark" onclick="openForm(null, 'expense')">− Add expense</button>
+      <button type="button" class="btn btn-income" onclick="openForm(null, 'income')">+ Add income</button>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Recent entries</h2>
+        <a href="#entries">See all</a>
+      </div>
+      <ul class="entries" id="recentList"><li class="empty">Loading...</li></ul>
+    </section>
+  </main>
+
+  <!-- ENTRIES -->
+  <main class="wrap view hidden" id="view-entries">
     <div class="top-row">
-      <h1>Your moni</h1>
+      <h1>Entries</h1>
       <div class="controls">
-        <input type="month" id="month" aria-label="Choose month">
-        <button type="button" id="addBtn" class="btn btn-dark">+ Add entry</button>
+        <input type="month" class="month-pick" aria-label="Choose month">
+        <button type="button" class="btn btn-dark" onclick="openForm(null, 'expense')">+ Expense</button>
+        <button type="button" class="btn btn-income" onclick="openForm(null, 'income')">+ Income</button>
+      </div>
+    </div>
+    <section class="panel">
+      <p class="month-summary" id="entriesSummary"></p>
+      <ul class="entries" id="entryList"><li class="empty">Loading...</li></ul>
+    </section>
+  </main>
+
+  <!-- INSIGHTS -->
+  <main class="wrap view hidden" id="view-insights">
+    <div class="top-row">
+      <h1>Insights</h1>
+      <div class="controls">
+        <input type="month" class="month-pick" aria-label="Choose month">
       </div>
     </div>
 
     <div class="totals">
-      <div class="total"><span>Money in</span><strong id="totalIn" class="in-text">₦0</strong></div>
-      <div class="total"><span>Money out</span><strong id="totalOut">₦0</strong></div>
-      <div class="total left"><span>Left</span><strong id="totalLeft">₦0</strong></div>
+      <div class="total"><span>Money in</span><strong id="insIn" class="in-text">₦0</strong></div>
+      <div class="total"><span>Money out</span><strong id="insOut">₦0</strong></div>
+      <div class="total left"><span>Left</span><strong id="insLeft">₦0</strong></div>
     </div>
 
-    <div class="grid">
-      <section class="panel">
-        <h2>Entries</h2>
-        <ul class="entries" id="entryList"><li class="empty">Loading...</li></ul>
-      </section>
-      <section class="panel">
-        <h2>Spending by category</h2>
-        <div id="breakdown"><p class="empty">No spending yet this month.</p></div>
-      </section>
-    </div>
+    <section class="panel">
+      <h2>Spending by category</h2>
+      <div id="breakdown"><p class="empty">No spending this month.</p></div>
+    </section>
+  </main>
+
+  <!-- PROFILE -->
+  <main class="wrap view hidden" id="view-profile">
+    <h1 style="margin-bottom:18px">Profile</h1>
+
+    <section class="panel">
+      <div class="info-row"><span>Name</span><span id="pName">–</span></div>
+      <div class="info-row"><span>Email</span><span id="pEmail">–</span></div>
+      <div class="info-row"><span>Member since</span><span id="pSince">–</span></div>
+    </section>
+
+    <section class="panel">
+      <h2>Get the app on your phone</h2>
+      <p><strong>Android (Chrome):</strong> tap the ⋮ menu, then <strong>Add to Home screen</strong> or <strong>Install app</strong>.</p>
+      <p><strong>iPhone (Safari):</strong> tap the Share button, then <strong>Add to Home Screen</strong>.</p>
+    </section>
+
+    <!-- The admin section is only created here by code, for admins -->
+    <div id="adminSlot"></div>
+
+    <button type="button" id="logoutBtn" class="btn btn-light logout">Log out</button>
   </main>
 
   <!-- ADD / EDIT POPUP -->
   <dialog id="entryDialog">
-    <h2 id="formTitle">Add entry</h2>
+    <h2 id="formTitle">Add expense</h2>
 
-    <div class="type-toggle">
+    <div class="type-toggle" id="typeToggle">
       <input type="radio" name="type" id="typeExpense" value="expense" checked>
       <label for="typeExpense">Expense</label>
       <input type="radio" name="type" id="typeIncome" value="income">
       <label for="typeIncome">Income</label>
     </div>
 
-    <label for="fTitle">What was it?</label>
+    <label for="fTitle" id="fTitleLabel">What was it?</label>
     <input type="text" id="fTitle" placeholder="e.g. Bolt to work" maxlength="80">
 
     <label for="fAmount">Amount (₦)</label>
@@ -155,7 +276,7 @@
 
     <div class="form-actions">
       <button type="button" id="cancelBtn" class="btn btn-light">Cancel</button>
-      <button type="button" id="saveBtn" class="btn btn-dark">Save entry</button>
+      <button type="button" id="saveBtn" class="btn btn-dark">Save expense</button>
     </div>
     <button type="button" id="deleteBtn" class="btn-delete hidden">Delete this entry</button>
   </dialog>
@@ -171,18 +292,23 @@
                 'Giving & donations', 'Other'],
       income:  ['Salary', 'Business', 'Side hustle', 'Gift', 'Refund', 'Other']
     };
+    const TABS = ['home', 'entries', 'insights', 'profile'];
 
     // ---------- Helpers ----------
     const $ = (id) => document.getElementById(id);
     const pad = (n) => String(n).padStart(2, '0');
     const naira = (n) => '₦' + Number(n).toLocaleString('en-NG', { maximumFractionDigits: 2 });
-    const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c =>
+    const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     function thisMonth() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
-    function today() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function today() { const d = new Date(); return thisMonth() + '-' + pad(d.getDate()); }
     function niceDate(s) {
       return new Date(s + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+    function monthName(value) {
+      const [y, m] = value.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
     }
     function monthRange(value) {
       const [y, m] = value.split('-').map(Number);
@@ -191,109 +317,191 @@
       return { start: `${y}-${pad(m)}-01`, end: `${nextY}-${pad(nextM)}-01` };
     }
 
+    // ---------- App state ----------
     let user = null;
-    let entries = [];
+    let selectedMonth = thisMonth();
+    const known = new Map();   // every entry currently on screen, by id (used for editing)
     let editingId = null;
+
+    // ---------- Tabs ----------
+    function showTab() {
+      let tab = location.hash.replace('#', '');
+      if (!TABS.includes(tab)) tab = 'home';
+      TABS.forEach(t => $('view-' + t).classList.toggle('hidden', t !== tab));
+      document.querySelectorAll('.tabbar a').forEach(a => {
+        const on = a.dataset.tab === tab;
+        a.classList.toggle('active', on);
+        if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener('hashchange', showTab);
 
     // ---------- Start ----------
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { location.href = 'auth.html'; return; }
       user = session.user;
+      showTab();
 
       const { data: profile } = await sb.from('profiles')
-        .select('full_name, role').eq('id', user.id).single();
+        .select('full_name, role, created_at').eq('id', user.id).single();
 
-      const name = (profile && profile.full_name) || user.email;
-      $('hello').textContent = 'Hi, ' + name.split(' ')[0];
-      if (profile && profile.role === 'admin') $('adminLink').classList.remove('hidden');
+      const name = (profile && profile.full_name) || '';
+      $('greet').textContent = name ? 'Hi, ' + name.split(' ')[0] : 'Hi there';
+      $('pName').textContent = name || '–';
+      $('pEmail').textContent = user.email;
+      $('pSince').textContent = new Date((profile && profile.created_at) || user.created_at)
+        .toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' });
 
-      $('month').value = thisMonth();
-      loadEntries();
+      if (profile && profile.role === 'admin') addAdminSection();
+
+      setMonth(thisMonth());
+      loadHome();
     }
 
-    // ---------- Load entries for the chosen month ----------
-    async function loadEntries() {
-      const { start, end } = monthRange($('month').value || thisMonth());
-      const { data, error } = await sb.from('transactions')
+    // Only runs for admins: builds the admin section in Profile
+    function addAdminSection() {
+      $('adminSlot').innerHTML = `
+        <section class="panel">
+          <h2>Admin</h2>
+          <p>See app stats and the list of users.</p>
+          <a href="admin.html" class="btn btn-dark">Open admin page</a>
+        </section>`;
+    }
+
+    // ---------- Month picker (shared by Entries and Insights) ----------
+    function setMonth(value) {
+      selectedMonth = value || thisMonth();
+      document.querySelectorAll('.month-pick').forEach(i => i.value = selectedMonth);
+      loadMonth();
+    }
+    document.querySelectorAll('.month-pick').forEach(i => i.onchange = () => setMonth(i.value));
+
+    // ---------- Load data ----------
+    async function fetchMonth(value) {
+      const { start, end } = monthRange(value);
+      return sb.from('transactions')
         .select('id, type, title, amount, category, txn_date')
         .gte('txn_date', start).lt('txn_date', end)
         .order('txn_date', { ascending: false })
         .order('created_at', { ascending: false });
+    }
 
+    async function loadHome() {
+      const month = thisMonth();
+      $('homeMonth').textContent = monthName(month);
+
+      const [monthRes, recentRes] = await Promise.all([
+        fetchMonth(month),
+        sb.from('transactions')
+          .select('id, type, title, amount, category, txn_date')
+          .order('txn_date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      if (monthRes.error || recentRes.error) {
+        $('recentList').innerHTML = '<li class="empty">Could not load your entries. Check your internet and refresh.</li>';
+        return;
+      }
+      renderTotals(monthRes.data, 'home');
+      renderList(recentRes.data, 'recentList', 'No entries yet.');
+    }
+
+    async function loadMonth() {
+      const { data, error } = await fetchMonth(selectedMonth);
       if (error) {
         $('entryList').innerHTML = '<li class="empty">Could not load your entries. Check your internet and refresh.</li>';
         return;
       }
-      entries = data;
-      render();
+      const t = renderTotals(data, 'ins');
+      $('entriesSummary').textContent = data.length
+        ? `${monthName(selectedMonth)} · In ${naira(t.totalIn)} · Out ${naira(t.totalOut)}`
+        : monthName(selectedMonth);
+      renderList(data, 'entryList', 'No entries for this month yet.');
+      renderBreakdown(data, t.totalOut);
     }
 
-    // ---------- Show everything on screen ----------
-    function render() {
+    function refreshAll() { loadHome(); loadMonth(); }
+
+    // ---------- Draw on screen ----------
+    function renderTotals(list, prefix) {
       let totalIn = 0, totalOut = 0;
-      entries.forEach(e => {
-        if (e.type === 'income') totalIn += Number(e.amount);
-        else totalOut += Number(e.amount);
-      });
+      list.forEach(e => e.type === 'income' ? totalIn += Number(e.amount) : totalOut += Number(e.amount));
       const left = totalIn - totalOut;
-      $('totalIn').textContent = naira(totalIn);
-      $('totalOut').textContent = naira(totalOut);
-      $('totalLeft').textContent = (left < 0 ? '−' : '') + naira(Math.abs(left));
-      $('totalLeft').classList.toggle('neg', left < 0);
+      $(prefix + 'In').textContent = naira(totalIn);
+      $(prefix + 'Out').textContent = naira(totalOut);
+      $(prefix + 'Left').textContent = (left < 0 ? '−' : '') + naira(Math.abs(left));
+      $(prefix + 'Left').classList.toggle('neg', left < 0);
+      return { totalIn, totalOut };
+    }
 
-      // Entries list
-      if (entries.length === 0) {
-        $('entryList').innerHTML =
-          '<li class="empty">No entries for this month yet.<br>' +
-          '<button type="button" class="btn btn-dark" onclick="openForm()">Add your first entry</button></li>';
-      } else {
-        $('entryList').innerHTML = entries.map(e => `
-          <li>
-            <button type="button" onclick="openForm('${e.id}')">
-              <span>${escapeHtml(e.title)}<small>${escapeHtml(e.category)} · ${niceDate(e.txn_date)}</small></span>
-              <span class="amt ${e.type === 'income' ? 'in' : ''}">${e.type === 'income' ? '+' : '−'}${naira(e.amount)}</span>
-            </button>
-          </li>`).join('');
+    function renderList(list, elId, emptyText) {
+      list.forEach(e => known.set(e.id, e));
+      if (list.length === 0) {
+        $(elId).innerHTML = `<li class="empty">${emptyText}<br>
+          <button type="button" class="btn btn-dark" onclick="openForm(null, 'expense')">Add an expense</button></li>`;
+        return;
       }
+      $(elId).innerHTML = list.map(e => `
+        <li>
+          <button type="button" class="entry-row" onclick="openForm('${e.id}')">
+            <span>${escapeHtml(e.title)}<small>${escapeHtml(e.category)} · ${niceDate(e.txn_date)}</small></span>
+            <span class="amt ${e.type === 'income' ? 'in' : ''}">${e.type === 'income' ? '+' : '−'}${naira(e.amount)}</span>
+          </button>
+        </li>`).join('');
+    }
 
-      // Spending by category
+    function renderBreakdown(list, totalOut) {
       const byCat = {};
-      entries.filter(e => e.type === 'expense').forEach(e => {
+      list.filter(e => e.type === 'expense').forEach(e => {
         byCat[e.category] = (byCat[e.category] || 0) + Number(e.amount);
       });
       const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
       if (cats.length === 0) {
-        $('breakdown').innerHTML = '<p class="empty">No spending yet this month.</p>';
-      } else {
-        $('breakdown').innerHTML = cats.map(([cat, amt]) => {
-          const pct = Math.round((amt / totalOut) * 100);
-          return `
-            <div class="bar-row">
-              <div class="bar-label"><span>${escapeHtml(cat)}</span><span>${naira(amt)}</span></div>
-              <div class="bar"><div style="width:${pct}%"></div></div>
-              <div class="bar-pct">${pct}% of spending</div>
-            </div>`;
-        }).join('');
+        $('breakdown').innerHTML = '<p class="empty">No spending this month.</p>';
+        return;
       }
+      $('breakdown').innerHTML = cats.map(([cat, amt]) => {
+        const pct = Math.round((amt / totalOut) * 100);
+        return `
+          <div class="bar-row">
+            <div class="bar-label"><span>${escapeHtml(cat)}</span><span>${naira(amt)}</span></div>
+            <div class="bar"><div style="width:${pct}%"></div></div>
+            <div class="bar-pct">${pct}% of spending</div>
+          </div>`;
+      }).join('');
     }
 
     // ---------- Add / edit popup ----------
     function currentType() { return $('typeIncome').checked ? 'income' : 'expense'; }
+
+    // Change the form's wording to match expense or income
+    function setFormType(type, isEditing) {
+      const isIncome = type === 'income';
+      $('formTitle').textContent = (isEditing ? 'Edit ' : 'Add ') + (isIncome ? 'income' : 'expense');
+      $('fTitleLabel').textContent = isIncome ? 'Where did it come from?' : 'What was it?';
+      $('fTitle').placeholder = isIncome ? 'e.g. Salary' : 'e.g. Bolt to work';
+      if (!$('saveBtn').disabled) $('saveBtn').textContent = isIncome ? 'Save income' : 'Save expense';
+    }
 
     function fillCategories(type, selected) {
       $('fCategory').innerHTML = CATEGORIES[type]
         .map(c => `<option ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
     }
 
-    function openForm(id) {
-      const entry = id ? entries.find(e => e.id === id) : null;
+    // openForm(id)            -> edit an existing entry
+    // openForm(null, 'income') -> add new income
+    // openForm(null, 'expense')-> add new expense
+    function openForm(id, newType) {
+      const entry = id ? known.get(id) : null;
       editingId = entry ? entry.id : null;
-      const type = entry ? entry.type : 'expense';
+      const type = entry ? entry.type : (newType === 'income' ? 'income' : 'expense');
 
-      $('formTitle').textContent = entry ? 'Edit entry' : 'Add entry';
       $('typeIncome').checked = type === 'income';
       $('typeExpense').checked = type === 'expense';
+      $('typeToggle').classList.toggle('hidden', !entry);   // switch only shows when editing
       fillCategories(type, entry && entry.category);
       $('fTitle').value = entry ? entry.title : '';
       $('fAmount').value = entry ? Number(entry.amount).toLocaleString('en-NG') : '';
@@ -301,7 +509,7 @@
       $('deleteBtn').classList.toggle('hidden', !entry);
       $('formMsg').textContent = '';
       $('saveBtn').disabled = false;
-      $('saveBtn').textContent = 'Save entry';
+      setFormType(type, !!entry);
 
       $('entryDialog').showModal();
       $('fTitle').focus();
@@ -330,41 +538,41 @@
       if (error) {
         $('formMsg').textContent = 'Could not save. Check your internet and try again.';
         $('saveBtn').disabled = false;
-        $('saveBtn').textContent = 'Save entry';
+        setFormType(currentType(), !!editingId);
         return;
       }
 
       closeForm();
-      $('month').value = txn_date.slice(0, 7);  // jump to the month of the saved entry
-      loadEntries();
+      selectedMonth = txn_date.slice(0, 7);  // Entries/Insights jump to the saved entry's month
+      document.querySelectorAll('.month-pick').forEach(i => i.value = selectedMonth);
+      refreshAll();
     }
 
     async function deleteEntry() {
       if (!editingId || !confirm('Delete this entry? This cannot be undone.')) return;
       const { error } = await sb.from('transactions').delete().eq('id', editingId);
       if (error) { $('formMsg').textContent = 'Could not delete. Try again.'; return; }
+      known.delete(editingId);
       closeForm();
-      loadEntries();
+      refreshAll();
     }
 
     // ---------- Buttons ----------
-    $('addBtn').onclick = () => openForm();
     $('cancelBtn').onclick = closeForm;
     $('saveBtn').onclick = saveEntry;
     $('deleteBtn').onclick = deleteEntry;
-    $('month').onchange = loadEntries;
-    $('typeExpense').onchange = () => fillCategories('expense');
-    $('typeIncome').onchange = () => fillCategories('income');
+    $('typeExpense').onchange = () => { fillCategories('expense'); setFormType('expense', true); };
+    $('typeIncome').onchange = () => { fillCategories('income'); setFormType('income', true); };
     $('entryDialog').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.tagName === 'INPUT') saveEntry();
     });
 
     $('logoutBtn').onclick = async () => {
+      if (!confirm('Log out of MoniUsed?')) return;
       await sb.auth.signOut();
       location.href = 'auth.html';
     };
 
-    // If the session ends (e.g. logged out in another tab), go to login
     sb.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') location.href = 'auth.html';
     });
