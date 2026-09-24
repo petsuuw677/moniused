@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — MoniUsed</title>
+  <meta name="theme-color" content="#f6c90e">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: var(--soft); }
+    .dash-header { background: var(--yellow); }
+    .dash-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; padding-bottom: 14px; }
+    .dash-header .logo { font-size: 22px; }
+    .user-area { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+    .user-area .btn { padding: 8px 16px; font-size: 14px; }
+    .hidden { display: none !important; }
+
+    .top-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin: 28px 0 20px; }
+    .top-row h1 { font-size: 34px; letter-spacing: -0.5px; }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    input, select {
+      padding: 11px 12px; font-size: 16px; font-family: var(--body); color: var(--ink);
+      border: 1.5px solid var(--line); border-radius: 10px; background: #fff; width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px rgba(11,93,69,.15); }
+    #month { width: auto; }
+
+    /* Totals */
+    .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .total { background: #fff; border-radius: var(--radius); padding: 18px; border: 1px solid var(--line); }
+    .total span { color: var(--muted); font-size: 14px; font-weight: 600; }
+    .total strong { display: block; font-family: var(--head); font-size: clamp(20px, 3.4vw, 30px); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .total.left { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .total.left span { color: #c9ccc2; }
+    .total.left strong.neg { color: #ff9a8f; }
+    .in-text { color: var(--green); }
+
+    /* Main layout */
+    .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: start; padding-bottom: 60px; }
+    .panel { background: #fff; border-radius: var(--radius); border: 1px solid var(--line); padding: 20px; }
+    .panel h2 { font-size: 20px; margin-bottom: 12px; }
+
+    .entries { list-style: none; }
+    .entries li button {
+      width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 13px 6px; background: none; border: 0; border-bottom: 1px solid var(--soft);
+      font-family: var(--body); font-size: 16px; color: var(--ink); text-align: left; cursor: pointer;
+    }
+    .entries li button:hover { background: var(--soft); }
+    .entries small { display: block; color: var(--muted); font-size: 13px; }
+    .amt { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .amt.in { color: var(--green); }
+
+    .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+    .empty .btn { margin-top: 14px; }
+
+    .bar-row { margin-bottom: 14px; }
+    .bar-label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 5px; }
+    .bar-label span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .bar { height: 10px; background: var(--soft); border-radius: 999px; overflow: hidden; }
+    .bar div { height: 100%; background: var(--green); border-radius: 999px; }
+    .bar-pct { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+    /* Add / edit form (popup) */
+    dialog { border: 0; border-radius: 16px; padding: 24px; width: min(440px, calc(100% - 24px)); margin: auto; color: var(--ink); }
+    dialog::backdrop { background: rgba(20, 20, 15, .55); }
+    dialog h2 { font-size: 24px; margin-bottom: 14px; }
+    dialog label { display: block; font-weight: 600; font-size: 15px; margin: 12px 0 6px; }
+    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 999px; padding: 4px; }
+    .type-toggle input { position: absolute; opacity: 0; width: 1px; }
+    .type-toggle label { margin: 0; text-align: center; padding: 10px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 700; }
+    .type-toggle input:checked + label { background: var(--ink); color: #fff; }
+    .type-toggle input:focus-visible + label { outline: 3px solid var(--green); }
+    .form-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .form-actions .btn { flex: 1; }
+    .btn-delete { background: none; border: 0; color: var(--red); font-weight: 700; margin-top: 14px; cursor: pointer; font-size: 15px; width: 100%; padding: 8px; }
+    .form-msg { color: var(--red); font-size: 14px; margin-top: 10px; min-height: 1em; }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+      .totals { gap: 8px; }
+      .total { padding: 14px 12px; }
+      .top-row h1 { font-size: 28px; }
+      #hello { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="dash-header">
+    <div class="wrap">
+      <a href="dashboard.html" class="logo">Moni<span>Used</span></a>
+      <div class="user-area">
+        <span id="hello"></span>
+        <a href="admin.html" id="adminLink" class="btn btn-light hidden">Admin</a>
+        <button type="button" id="logoutBtn" class="btn btn-light">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="top-row">
+      <h1>Your moni</h1>
+      <div class="controls">
+        <input type="month" id="month" aria-label="Choose month">
+        <button type="button" id="addBtn" class="btn btn-dark">+ Add entry</button>
+      </div>
+    </div>
+
+    <div class="totals">
+      <div class="total"><span>Money in</span><strong id="totalIn" class="in-text">₦0</strong></div>
+      <div class="total"><span>Money out</span><strong id="totalOut">₦0</strong></div>
+      <div class="total left"><span>Left</span><strong id="totalLeft">₦0</strong></div>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Entries</h2>
+        <ul class="entries" id="entryList"><li class="empty">Loading...</li></ul>
+      </section>
+      <section class="panel">
+        <h2>Spending by category</h2>
+        <div id="breakdown"><p class="empty">No spending yet this month.</p></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ADD / EDIT POPUP -->
+  <dialog id="entryDialog">
+    <h2 id="formTitle">Add entry</h2>
+
+    <div class="type-toggle">
+      <input type="radio" name="type" id="typeExpense" value="expense" checked>
+      <label for="typeExpense">Expense</label>
+      <input type="radio" name="type" id="typeIncome" value="income">
+      <label for="typeIncome">Income</label>
+    </div>
+
+    <label for="fTitle">What was it?</label>
+    <input type="text" id="fTitle" placeholder="e.g. Bolt to work" maxlength="80">
+
+    <label for="fAmount">Amount (₦)</label>
+    <input type="text" id="fAmount" inputmode="decimal" placeholder="e.g. 5,000">
+
+    <label for="fCategory">Category</label>
+    <select id="fCategory"></select>
+
+    <label for="fDate">Date</label>
+    <input type="date" id="fDate">
+
+    <p class="form-msg" id="formMsg"></p>
+
+    <div class="form-actions">
+      <button type="button" id="cancelBtn" class="btn btn-light">Cancel</button>
+      <button type="button" id="saveBtn" class="btn btn-dark">Save entry</button>
+    </div>
+    <button type="button" id="deleteBtn" class="btn-delete hidden">Delete this entry</button>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
+  <script>
+    // ---------- Settings ----------
+    const CATEGORIES = {
+      expense: ['Food', 'Transport', 'Data & airtime', 'Bills & utilities', 'Rent & housing',
+                'Family support', 'Health', 'Shopping', 'Outings & fun', 'Education',
+                'Giving & donations', 'Other'],
+      income:  ['Salary', 'Business', 'Side hustle', 'Gift', 'Refund', 'Other']
+    };
+
+    // ---------- Helpers ----------
+    const $ = (id) => document.getElementById(id);
+    const pad = (n) => String(n).padStart(2, '0');
+    const naira = (n) => '₦' + Number(n).toLocaleString('en-NG', { maximumFractionDigits: 2 });
+    const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function thisMonth() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+    function today() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function niceDate(s) {
+      return new Date(s + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+    function monthRange(value) {
+      const [y, m] = value.split('-').map(Number);
+      const nextY = m === 12 ? y + 1 : y;
+      const nextM = m === 12 ? 1 : m + 1;
+      return { start: `${y}-${pad(m)}-01`, end: `${nextY}-${pad(nextM)}-01` };
+    }
+
+    let user = null;
+    let entries = [];
+    let editingId = null;
+
+    // ---------- Start ----------
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { location.href = 'auth.html'; return; }
+      user = session.user;
+
+      const { data: profile } = await sb.from('profiles')
+        .select('full_name, role').eq('id', user.id).single();
+
+      const name = (profile && profile.full_name) || user.email;
+      $('hello').textContent = 'Hi, ' + name.split(' ')[0];
+      if (profile && profile.role === 'admin') $('adminLink').classList.remove('hidden');
+
+      $('month').value = thisMonth();
+      loadEntries();
+    }
+
+    // ---------- Load entries for the chosen month ----------
+    async function loadEntries() {
+      const { start, end } = monthRange($('month').value || thisMonth());
+      const { data, error } = await sb.from('transactions')
+        .select('id, type, title, amount, category, txn_date')
+        .gte('txn_date', start).lt('txn_date', end)
+        .order('txn_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        $('entryList').innerHTML = '<li class="empty">Could not load your entries. Check your internet and refresh.</li>';
+        return;
+      }
+      entries = data;
+      render();
+    }
+
+    // ---------- Show everything on screen ----------
+    function render() {
+      let totalIn = 0, totalOut = 0;
+      entries.forEach(e => {
+        if (e.type === 'income') totalIn += Number(e.amount);
+        else totalOut += Number(e.amount);
+      });
+      const left = totalIn - totalOut;
+      $('totalIn').textContent = naira(totalIn);
+      $('totalOut').textContent = naira(totalOut);
+      $('totalLeft').textContent = (left < 0 ? '−' : '') + naira(Math.abs(left));
+      $('totalLeft').classList.toggle('neg', left < 0);
+
+      // Entries list
+      if (entries.length === 0) {
+        $('entryList').innerHTML =
+          '<li class="empty">No entries for this month yet.<br>' +
+          '<button type="button" class="btn btn-dark" onclick="openForm()">Add your first entry</button></li>';
+      } else {
+        $('entryList').innerHTML = entries.map(e => `
+          <li>
+            <button type="button" onclick="openForm('${e.id}')">
+              <span>${escapeHtml(e.title)}<small>${escapeHtml(e.category)} · ${niceDate(e.txn_date)}</small></span>
+              <span class="amt ${e.type === 'income' ? 'in' : ''}">${e.type === 'income' ? '+' : '−'}${naira(e.amount)}</span>
+            </button>
+          </li>`).join('');
+      }
+
+      // Spending by category
+      const byCat = {};
+      entries.filter(e => e.type === 'expense').forEach(e => {
+        byCat[e.category] = (byCat[e.category] || 0) + Number(e.amount);
+      });
+      const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+      if (cats.length === 0) {
+        $('breakdown').innerHTML = '<p class="empty">No spending yet this month.</p>';
+      } else {
+        $('breakdown').innerHTML = cats.map(([cat, amt]) => {
+          const pct = Math.round((amt / totalOut) * 100);
+          return `
+            <div class="bar-row">
+              <div class="bar-label"><span>${escapeHtml(cat)}</span><span>${naira(amt)}</span></div>
+              <div class="bar"><div style="width:${pct}%"></div></div>
+              <div class="bar-pct">${pct}% of spending</div>
+            </div>`;
+        }).join('');
+      }
+    }
+
+    // ---------- Add / edit popup ----------
+    function currentType() { return $('typeIncome').checked ? 'income' : 'expense'; }
+
+    function fillCategories(type, selected) {
+      $('fCategory').innerHTML = CATEGORIES[type]
+        .map(c => `<option ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
+    }
+
+    function openForm(id) {
+      const entry = id ? entries.find(e => e.id === id) : null;
+      editingId = entry ? entry.id : null;
+      const type = entry ? entry.type : 'expense';
+
+      $('formTitle').textContent = entry ? 'Edit entry' : 'Add entry';
+      $('typeIncome').checked = type === 'income';
+      $('typeExpense').checked = type === 'expense';
+      fillCategories(type, entry && entry.category);
+      $('fTitle').value = entry ? entry.title : '';
+      $('fAmount').value = entry ? Number(entry.amount).toLocaleString('en-NG') : '';
+      $('fDate').value = entry ? entry.txn_date : today();
+      $('deleteBtn').classList.toggle('hidden', !entry);
+      $('formMsg').textContent = '';
+      $('saveBtn').disabled = false;
+      $('saveBtn').textContent = 'Save entry';
+
+      $('entryDialog').showModal();
+      $('fTitle').focus();
+    }
+
+    function closeForm() { $('entryDialog').close(); }
+
+    async function saveEntry() {
+      const title = $('fTitle').value.trim();
+      const amount = parseFloat($('fAmount').value.replace(/[,₦\s]/g, ''));
+      const txn_date = $('fDate').value;
+
+      if (!title) return $('formMsg').textContent = 'Enter what it was.';
+      if (!(amount > 0)) return $('formMsg').textContent = 'Enter an amount greater than ₦0.';
+      if (!txn_date) return $('formMsg').textContent = 'Choose a date.';
+
+      const row = { type: currentType(), title, amount, category: $('fCategory').value, txn_date };
+
+      $('saveBtn').disabled = true;
+      $('saveBtn').textContent = 'Saving...';
+
+      const { error } = editingId
+        ? await sb.from('transactions').update(row).eq('id', editingId)
+        : await sb.from('transactions').insert(row);
+
+      if (error) {
+        $('formMsg').textContent = 'Could not save. Check your internet and try again.';
+        $('saveBtn').disabled = false;
+        $('saveBtn').textContent = 'Save entry';
+        return;
+      }
+
+      closeForm();
+      $('month').value = txn_date.slice(0, 7);  // jump to the month of the saved entry
+      loadEntries();
+    }
+
+    async function deleteEntry() {
+      if (!editingId || !confirm('Delete this entry? This cannot be undone.')) return;
+      const { error } = await sb.from('transactions').delete().eq('id', editingId);
+      if (error) { $('formMsg').textContent = 'Could not delete. Try again.'; return; }
+      closeForm();
+      loadEntries();
+    }
+
+    // ---------- Buttons ----------
+    $('addBtn').onclick = () => openForm();
+    $('cancelBtn').onclick = closeForm;
+    $('saveBtn').onclick = saveEntry;
+    $('deleteBtn').onclick = deleteEntry;
+    $('month').onchange = loadEntries;
+    $('typeExpense').onchange = () => fillCategories('expense');
+    $('typeIncome').onchange = () => fillCategories('income');
+    $('entryDialog').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.tagName === 'INPUT') saveEntry();
+    });
+
+    $('logoutBtn').onclick = async () => {
+      await sb.auth.signOut();
+      location.href = 'auth.html';
+    };
+
+    // If the session ends (e.g. logged out in another tab), go to login
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') location.href = 'auth.html';
+    });
+
+    init();
+  </script>
+</body>
+</html>
