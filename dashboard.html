@@ -606,7 +606,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="install.js"></script>
+  <script src="install.js?v=2"></script>
 
   <script>
     // ================= SETTINGS =================
@@ -778,7 +778,7 @@
       setMonth(thisMonth());
       loadHome();
       loadProfileStats();
-      MoniInstall.autoShow();
+      if (window.MoniInstall) MoniInstall.autoShow();
     }
 
     function showName() {
@@ -1071,7 +1071,7 @@
       toast('Password changed ✓');
     }
 
-    $('installBtn').onclick = () => MoniInstall.show();
+    $('installBtn').onclick = () => { if (window.MoniInstall) MoniInstall.show(); };
 
     // ---------- Profile photo ----------
     function openPhotoSheet() {

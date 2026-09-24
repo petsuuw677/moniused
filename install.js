@@ -3,7 +3,8 @@
 //   MoniInstall.show()      -> open the guide now
 //   MoniInstall.autoShow()  -> open it once in a while, only if the app isn't installed yet
 (function () {
-  const LATER_KEY = 'mu_install_hide_until';
+  const LATER_KEY = 'mu_install_hide_until_v2';
+  let openedAutomatically = false;
 
   const ua = navigator.userAgent;
   const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -98,8 +99,11 @@
 
       const act = e.target.closest('[data-mi]');
       if (act) {
-        if (act.dataset.mi === 'later') hideFor(3);
-        if (act.dataset.mi === 'close') hideFor(14);
+        // Only the automatic popup remembers "later". Opening it from a button never blocks the popup.
+        if (openedAutomatically) {
+          if (act.dataset.mi === 'later') hideFor(3);
+          if (act.dataset.mi === 'close') hideFor(7);
+        }
         d.close();
         return;
       }
@@ -156,7 +160,8 @@
     try { localStorage.setItem(LATER_KEY, String(Date.now() + days * 864e5)); } catch (e) {}
   }
 
-  function show() {
+  function show(auto) {
+    openedAutomatically = auto === true;
     build();
     render(isAndroid ? 'android' : 'iphone');
     const d = document.getElementById('miDialog');
@@ -165,13 +170,14 @@
 
   function autoShow() {
     if (isInstalled()) return;
+    const forced = new URLSearchParams(location.search).get('guide') === '1';   // for testing: dashboard.html?guide=1
     let until = 0;
     try { until = Number(localStorage.getItem(LATER_KEY)) || 0; } catch (e) {}
-    if (Date.now() < until) return;
+    if (!forced && Date.now() < until) return;
     setTimeout(() => {
       // Don't cover a form the user already opened
       if (document.querySelector('dialog[open]')) return;
-      show();
+      show(true);
     }, 1500);
   }
 
