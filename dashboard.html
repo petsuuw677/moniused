@@ -11,7 +11,8 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <style>
-    body { background: var(--soft); padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+    html { background: var(--yellow); }
+    body { background: var(--soft); min-height: 100vh; padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
     .hidden { display: none !important; }
     .muted { color: var(--muted); }
 
@@ -19,21 +20,53 @@
     .dash-header { background: var(--yellow); }
     .dash-header .wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; padding-bottom: 14px; }
     .dash-header .logo { font-size: 22px; }
+    .dash-header .wrap { padding-top: 10px; padding-bottom: 10px; }
+    .head-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn {
+      position: relative; width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer;
+      background: rgba(255,255,255,.5); color: var(--ink); display: grid; place-items: center;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,.75); }
+    .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .badge {
+      position: absolute; top: 2px; right: 0; min-width: 19px; height: 19px; padding: 0 5px;
+      border-radius: 999px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700;
+      display: grid; place-items: center; border: 2px solid var(--yellow);
+    }
+    .avatar {
+      width: 42px; height: 42px; border-radius: 50%; background: var(--green); color: #fff;
+      display: grid; place-items: center; font-weight: 700; font-size: 16px; text-decoration: none; flex: 0 0 auto;
+    }
+    .avatar.big { width: 64px; height: 64px; font-size: 24px; font-family: var(--head); }
 
-    /* ---------- Tab bar ---------- */
+    /* ---------- Glass tab bar ---------- */
     .tabbar {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
-      background: #fff; border-top: 1px solid var(--line);
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      position: fixed; left: 14px; right: 14px; z-index: 50;
+      bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, .55);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      backdrop-filter: blur(22px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, .75);
+      box-shadow: 0 10px 34px rgba(20, 30, 20, .16), inset 0 1px 0 rgba(255, 255, 255, .9);
     }
     .tabbar a {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 9px 4px 8px; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 8px 4px 7px; border-radius: 24px;
+      font-size: 11.5px; font-weight: 600; color: #4d5148; text-decoration: none;
+      transition: background .2s, color .2s;
     }
-    .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .tabbar a.active { color: var(--green); }
+    .tabbar svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tabbar a.active {
+      color: var(--green);
+      background: rgba(255, 255, 255, .85);
+      box-shadow: 0 2px 10px rgba(20, 30, 20, .10), inset 0 1px 0 #fff;
+    }
     .tabbar a.active svg { stroke-width: 2.6; }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .tabbar { background: rgba(255, 255, 255, .96); }
+    }
 
     /* ---------- Page basics ---------- */
     .view { padding-top: 22px; padding-bottom: 40px; }
@@ -160,6 +193,43 @@
     .logout { width: 100%; color: var(--red); border-color: var(--red); }
     .logout:hover { background: #fdecea; }
 
+    /* ---------- Profile (settings style) ---------- */
+    .profile-card { display: flex; align-items: center; gap: 16px; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-bottom: 12px; }
+    .profile-card h2 { font-size: 22px; margin-bottom: 2px; }
+    .profile-card p { color: var(--muted); font-size: 15px; word-break: break-all; }
+    .profile-card small { color: var(--muted); font-size: 13px; }
+    .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 6px; }
+    .mini-stats div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 8px; text-align: center; min-width: 0; }
+    .mini-stats strong { display: block; font-family: var(--head); font-size: 22px; font-variant-numeric: tabular-nums; }
+    .mini-stats span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+    .group-label { font-size: 13px; font-weight: 700; color: var(--muted); margin: 20px 6px 8px; }
+    .settings { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    .set-row {
+      display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px;
+      background: none; border: 0; border-bottom: 1px solid var(--soft);
+      font-family: var(--body); font-size: 16px; color: var(--ink); text-align: left; text-decoration: none; cursor: pointer;
+    }
+    .set-row:last-child { border-bottom: 0; }
+    .set-row:hover { background: #fafaf7; }
+    .set-row .grow { flex: 1; min-width: 0; }
+    .set-row .value { color: var(--muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+    .set-row .chev { color: #a3a79c; font-size: 20px; line-height: 1; }
+    .set-row.danger { color: var(--red); }
+    .set-icon { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; flex: 0 0 auto; }
+    .version { text-align: center; color: var(--muted); font-size: 13px; margin: 18px 0 8px; }
+
+    /* ---------- Notifications ---------- */
+    .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .sheet-head h2 { margin: 0; }
+    .close-x { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--soft); font-size: 16px; cursor: pointer; color: var(--ink); }
+    .notif-list { list-style: none; }
+    .notif { display: flex; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--soft); }
+    .notif:last-child { border-bottom: 0; }
+    .notif .cat-icon { width: 40px; height: 40px; }
+    .notif b { display: block; font-size: 15.5px; }
+    .notif p { color: var(--muted); font-size: 14.5px; margin: 2px 0 0; }
+    .notif.unread b::after { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-left: 8px; vertical-align: middle; }
+
     /* ---------- Add / edit form ---------- */
     dialog {
       border: 0; border-radius: 20px; padding: 22px; width: min(460px, calc(100% - 24px));
@@ -191,7 +261,7 @@
 
     /* ---------- Saved message ---------- */
     .toast {
-      position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom, 0px)); z-index: 100;
+      position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 100;
       transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
       background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 600;
       transition: opacity .2s, transform .2s;
@@ -214,12 +284,11 @@
     @media (min-width: 801px) {
       body { padding-bottom: 0; }
       .tabbar {
-        position: sticky; top: 0; bottom: auto; border-top: 0; border-bottom: 1px solid var(--line);
-        grid-template-columns: repeat(4, auto); justify-content: center; gap: 6px; padding: 0;
+        position: sticky; top: 12px; bottom: auto; left: auto; right: auto;
+        width: fit-content; margin: 12px auto 0; grid-template-columns: repeat(4, auto);
       }
-      .tabbar a { flex-direction: row; gap: 8px; font-size: 15px; padding: 14px 18px; }
+      .tabbar a { flex-direction: row; gap: 8px; font-size: 15px; padding: 10px 18px; }
       .tabbar svg { width: 20px; height: 20px; }
-      .tabbar a.active { box-shadow: inset 0 -3px 0 var(--green); }
       .view { max-width: 760px; }
       .add-row { max-width: 460px; }
       .toast { bottom: 30px; }
@@ -230,7 +299,16 @@
 </head>
 <body>
   <header class="dash-header">
-    <div class="wrap"><a href="#home" class="logo">Moni<span>Used</span></a></div>
+    <div class="wrap">
+      <a href="#home" class="logo">Moni<span>Used</span></a>
+      <div class="head-actions">
+        <button type="button" class="icon-btn" id="bellBtn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="badge hidden" id="bellBadge"></span>
+        </button>
+        <a href="#profile" class="avatar" id="headAvatar" aria-label="Profile">–</a>
+      </div>
+    </div>
   </header>
 
   <!-- ================= TAB BAR ================= -->
@@ -332,23 +410,75 @@
   <main class="wrap view hidden" id="view-profile">
     <h1 style="margin-bottom:16px">Profile</h1>
 
-    <section class="panel">
-      <div class="info-row"><span>Name</span><span id="pName">–</span></div>
-      <div class="info-row"><span>Email</span><span id="pEmail">–</span></div>
-      <div class="info-row"><span>Member since</span><span id="pSince">–</span></div>
+    <section class="profile-card">
+      <div class="avatar big" id="pAvatar">–</div>
+      <div style="min-width:0">
+        <h2 id="pName">–</h2>
+        <p id="pEmail">–</p>
+        <small id="pSince"></small>
+      </div>
     </section>
 
-    <section class="panel">
-      <h2>Get the app on your phone</h2>
-      <p><strong>Android (Chrome):</strong> tap the ⋮ menu, then <strong>Add to Home screen</strong> or <strong>Install app</strong>.</p>
-      <p><strong>iPhone (Safari):</strong> tap the Share button, then <strong>Add to Home Screen</strong>.</p>
-    </section>
+    <div class="mini-stats">
+      <div><strong id="stEntries">–</strong><span>Entries</span></div>
+      <div><strong id="stDays">–</strong><span>Days tracked</span></div>
+      <div><strong id="stStreak">–</strong><span>Day streak</span></div>
+    </div>
+
+    <p class="group-label">Account</p>
+    <div class="settings">
+      <button type="button" class="set-row" id="editNameBtn">
+        <span class="set-icon" style="background:#3b82c426">✏️</span><span class="grow">Edit name</span><span class="chev">›</span>
+      </button>
+      <button type="button" class="set-row" id="passwordBtn">
+        <span class="set-icon" style="background:#7b61d126">🔒</span><span class="grow">Change password</span><span class="chev">›</span>
+      </button>
+    </div>
+
+    <p class="group-label">Your data</p>
+    <div class="settings">
+      <button type="button" class="set-row" id="exportBtn">
+        <span class="set-icon" style="background:#1f9d6b26">📤</span><span class="grow">Export my entries</span><span class="value">CSV</span><span class="chev">›</span>
+      </button>
+      <button type="button" class="set-row danger" id="deleteAllBtn">
+        <span class="set-icon" style="background:#c9453d26">🗑️</span><span class="grow">Delete all my entries</span>
+      </button>
+    </div>
+
+    <p class="group-label">App</p>
+    <div class="settings">
+      <button type="button" class="set-row" id="installBtn">
+        <span class="set-icon" style="background:#d9a40026">📲</span><span class="grow">Install on your phone</span><span class="chev">›</span>
+      </button>
+      <a href="/" class="set-row">
+        <span class="set-icon" style="background:#8a8d8526">🌐</span><span class="grow">MoniUsed website</span><span class="chev">›</span>
+      </a>
+    </div>
 
     <!-- Admin section is only created here by code, for admins -->
     <div id="adminSlot"></div>
 
-    <button type="button" id="logoutBtn" class="btn btn-light logout">Log out</button>
+    <p class="group-label">&nbsp;</p>
+    <div class="settings">
+      <button type="button" class="set-row danger" id="logoutBtn">
+        <span class="set-icon" style="background:#c9453d26">↪</span><span class="grow">Log out</span>
+      </button>
+    </div>
+
+    <p class="version">MoniUsed v1.1</p>
   </main>
+
+  <!-- ================= NOTIFICATIONS ================= -->
+  <dialog id="notifDialog">
+    <div class="sheet-head">
+      <h2>Notifications</h2>
+      <button type="button" class="close-x" onclick="$('notifDialog').close()" aria-label="Close">✕</button>
+    </div>
+    <ul class="notif-list" id="notifList"></ul>
+  </dialog>
+
+  <!-- ================= SMALL POP-UP (edit name, password, install) ================= -->
+  <dialog id="sheet"></dialog>
 
   <!-- ================= ADD / EDIT FORM ================= -->
   <dialog id="entryDialog">
@@ -463,6 +593,17 @@
       return { totalIn, totalOut, left: totalIn - totalOut };
     }
     function signedNaira(n) { return (n < 0 ? '−' : '') + naira(Math.abs(n)); }
+    const cap = (w) => w ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+    function initials(name, email) {
+      const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+      if (parts.length) return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+      return (email || '?')[0].toUpperCase();
+    }
+    function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+    // Small memory on this phone for which notifications were already seen
+    function getSeen() { try { return JSON.parse(localStorage.getItem('mu_seen_' + user.id)) || []; } catch (e) { return []; } }
+    function setSeen(ids) { try { localStorage.setItem('mu_seen_' + user.id, JSON.stringify(ids.slice(-100))); } catch (e) {} }
 
     function toast(text) {
       const t = $('toast');
@@ -480,6 +621,9 @@
     const known = new Map();   // entries on screen, by id (for editing)
     let editingId = null;
     let chosenCategory = null;
+    let profileName = '';
+    let profileCreated = null;
+    let notifications = [];
 
     // ================= TABS =================
     function showTab() {
@@ -505,29 +649,40 @@
       const { data: profile } = await sb.from('profiles')
         .select('full_name, role, created_at').eq('id', user.id).single();
 
-      const name = (profile && profile.full_name) || '';
-      const h = new Date().getHours();
-      const hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-      $('greet').textContent = name ? `${hello}, ${name.split(' ')[0]} 👋` : `${hello} 👋`;
-
-      $('pName').textContent = name || '–';
+      profileName = (profile && profile.full_name) || '';
+      profileCreated = (profile && profile.created_at) || user.created_at;
+      showName();
       $('pEmail').textContent = user.email;
-      $('pSince').textContent = new Date((profile && profile.created_at) || user.created_at)
+      $('pSince').textContent = 'Member since ' + new Date(profileCreated)
         .toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' });
 
       if (profile && profile.role === 'admin') addAdminSection();
 
       setMonth(thisMonth());
       loadHome();
+      loadProfileStats();
+    }
+
+    function showName() {
+      const first = cap(profileName.split(' ')[0]);
+      const h = new Date().getHours();
+      const hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+      $('greet').textContent = first ? `${hello}, ${first} 👋` : `${hello} 👋`;
+      $('pName').textContent = profileName ? profileName.split(' ').map(cap).join(' ') : 'Add your name';
+      const ini = initials(profileName, user.email);
+      $('headAvatar').textContent = ini;
+      $('pAvatar').textContent = ini;
     }
 
     function addAdminSection() {
       $('adminSlot').innerHTML = `
-        <section class="panel">
-          <h2>Admin</h2>
-          <p>See app stats and the list of users.</p>
-          <a href="admin.html" class="btn btn-dark">Open admin page</a>
-        </section>`;
+        <p class="group-label">Admin</p>
+        <div class="settings">
+          <a href="admin.html" class="set-row">
+            <span class="set-icon" style="background:#f6c90e55">🛡️</span><span class="grow">Admin page</span>
+            <span class="value">Stats & users</span><span class="chev">›</span>
+          </a>
+        </div>`;
     }
 
     // ================= LOAD DATA =================
@@ -575,6 +730,8 @@
         $('homeCompare').textContent = '';
       }
 
+      buildNotifications(cur.data, s, lastOut, lastName, month);
+
       // Recent entries
       renderList(recent.data.slice(0, 5), 'recentList', 'No entries yet. Add your first expense.', false);
 
@@ -592,6 +749,189 @@
           ${iconHtml(e.type, e.category)}${escapeHtml(e.title)}
         </button>`).join('');
     }
+
+    // ================= NOTIFICATIONS =================
+    function buildNotifications(list, s, lastOut, lastName, month) {
+      const n = [];
+      const t = today();
+      const hour = new Date().getHours();
+
+      if (profileCreated && (Date.now() - new Date(profileCreated)) < 7 * 864e5) {
+        n.push({ id: 'welcome', icon: '🎉', color: '#f6c90e',
+          title: 'Welcome to MoniUsed', text: 'Add what you spend every day, and we\'ll show you where your moni goes.' });
+      }
+      if (hour >= 18 && !list.some(e => e.txn_date === t)) {
+        n.push({ id: 'remind-' + t, icon: '📝', color: '#3b82c4',
+          title: 'Did you spend anything today?', text: 'Add it now before you forget.' });
+      }
+      if (lastOut > 0 && s.totalOut > lastOut) {
+        n.push({ id: 'over-' + month, icon: '⚠️', color: '#c9453d',
+          title: `More than all of ${lastName}`, text: `You've spent ${naira(s.totalOut)} this month. In all of ${lastName} you spent ${naira(lastOut)}.` });
+      } else if (lastOut > 0 && s.totalOut >= lastOut * 0.8) {
+        n.push({ id: 'eighty-' + month, icon: '⏳', color: '#d9a400',
+          title: `80% of ${lastName}'s spending`, text: `You've spent ${naira(s.totalOut)} so far. ${lastName} total was ${naira(lastOut)}.` });
+      }
+      if (s.totalIn > 0 && s.left < 0) {
+        n.push({ id: 'neg-' + month, icon: '📉', color: '#c9453d',
+          title: 'Spending more than you earn', text: `You've spent ${naira(-s.left)} more than you earned this month.` });
+      }
+      if (s.totalIn === 0 && s.totalOut > 0) {
+        n.push({ id: 'noinc-' + month, icon: '💼', color: '#0b5d45',
+          title: 'Add your income', text: 'Record what came in this month so MoniUsed can show what\'s left.' });
+      }
+      const byCat = {};
+      list.filter(e => e.type === 'expense').forEach(e => byCat[e.category] = (byCat[e.category] || 0) + Number(e.amount));
+      const top = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
+      if (top && s.totalOut > 0) {
+        const c = catInfo('expense', top[0]);
+        n.push({ id: 'top-' + month + '-' + top[0], icon: c.icon, color: c.color,
+          title: `${top[0]} is your biggest spend`, text: `${naira(top[1])} this month, ${Math.round(top[1] / s.totalOut * 100)}% of all your spending.` });
+      }
+
+      notifications = n;
+      const seen = getSeen();
+      const unread = n.filter(x => !seen.includes(x.id)).length;
+      $('bellBadge').textContent = unread;
+      $('bellBadge').classList.toggle('hidden', unread === 0);
+      $('bellBtn').setAttribute('aria-label', unread ? `Notifications, ${unread} new` : 'Notifications');
+    }
+
+    function openNotifications() {
+      const seen = getSeen();
+      $('notifList').innerHTML = notifications.length
+        ? notifications.map(x => `
+            <li class="notif ${seen.includes(x.id) ? '' : 'unread'}">
+              <span class="cat-icon" style="background:${x.color}26" aria-hidden="true">${x.icon}</span>
+              <div><b>${escapeHtml(x.title)}</b><p>${escapeHtml(x.text)}</p></div>
+            </li>`).join('')
+        : '<li class="empty">You\'re all caught up ✨</li>';
+      $('notifDialog').showModal();
+      setSeen([...new Set([...seen, ...notifications.map(x => x.id)])]);
+      $('bellBadge').classList.add('hidden');
+      $('bellBtn').setAttribute('aria-label', 'Notifications');
+    }
+    $('bellBtn').onclick = openNotifications;
+
+    // ================= PROFILE =================
+    async function loadProfileStats() {
+      const { data, error } = await sb.from('transactions').select('txn_date');
+      if (error) return;
+      const days = new Set(data.map(e => e.txn_date));
+      $('stEntries').textContent = data.length.toLocaleString('en-NG');
+      $('stDays').textContent = days.size.toLocaleString('en-NG');
+
+      // Streak: days in a row with at least one entry, ending today (or yesterday)
+      const d = new Date();
+      if (!days.has(dateKey(d))) d.setDate(d.getDate() - 1);
+      let streak = 0;
+      while (days.has(dateKey(d))) { streak++; d.setDate(d.getDate() - 1); }
+      $('stStreak').textContent = streak ? streak + ' 🔥' : '0';
+    }
+
+    function openSheet(html) {
+      $('sheet').innerHTML = html;
+      $('sheet').showModal();
+      const first = $('sheet').querySelector('input');
+      if (first) first.focus();
+    }
+    function closeSheet() { $('sheet').close(); }
+
+    $('editNameBtn').onclick = () => {
+      openSheet(`
+        <div class="sheet-head"><h2>Edit name</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <label for="newName">Your name</label>
+        <input type="text" id="newName" maxlength="60" value="${escapeHtml(profileName)}" autocomplete="name">
+        <p class="form-msg" id="sheetMsg"></p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-light" onclick="closeSheet()">Cancel</button>
+          <button type="button" class="btn btn-dark" id="saveNameBtn" onclick="saveName()">Save name</button>
+        </div>`);
+    };
+
+    async function saveName() {
+      const name = $('newName').value.trim();
+      if (!name) return $('sheetMsg').textContent = 'Enter your name.';
+      $('saveNameBtn').disabled = true; $('saveNameBtn').textContent = 'Saving...';
+      const { error } = await sb.rpc('update_my_name', { new_name: name });
+      if (error) {
+        $('sheetMsg').textContent = 'Could not save. Try again.';
+        $('saveNameBtn').disabled = false; $('saveNameBtn').textContent = 'Save name';
+        return;
+      }
+      profileName = name;
+      showName();
+      closeSheet();
+      toast('Name updated ✓');
+    }
+
+    $('passwordBtn').onclick = () => {
+      openSheet(`
+        <div class="sheet-head"><h2>Change password</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <label for="pw1">New password</label>
+        <input type="password" id="pw1" autocomplete="new-password" placeholder="At least 6 characters">
+        <label for="pw2">Type it again</label>
+        <input type="password" id="pw2" autocomplete="new-password">
+        <p class="form-msg" id="sheetMsg"></p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-light" onclick="closeSheet()">Cancel</button>
+          <button type="button" class="btn btn-dark" id="savePwBtn" onclick="savePassword()">Change password</button>
+        </div>`);
+    };
+
+    async function savePassword() {
+      const a = $('pw1').value, b = $('pw2').value;
+      if (a.length < 6) return $('sheetMsg').textContent = 'Password must be at least 6 characters.';
+      if (a !== b) return $('sheetMsg').textContent = 'The two passwords don\'t match.';
+      $('savePwBtn').disabled = true; $('savePwBtn').textContent = 'Saving...';
+      const { error } = await sb.auth.updateUser({ password: a });
+      if (error) {
+        $('sheetMsg').textContent = (error.message || '').toLowerCase().includes('different')
+          ? 'Choose a password different from your current one.'
+          : 'Could not change password. Try again.';
+        $('savePwBtn').disabled = false; $('savePwBtn').textContent = 'Change password';
+        return;
+      }
+      closeSheet();
+      toast('Password changed ✓');
+    }
+
+    $('installBtn').onclick = () => {
+      openSheet(`
+        <div class="sheet-head"><h2>Install MoniUsed</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <p style="margin:10px 0"><b>iPhone (Safari):</b> tap the Share button, then <b>Add to Home Screen</b>.</p>
+        <p style="margin:10px 0"><b>Android (Chrome):</b> tap the ⋮ menu, then <b>Add to Home screen</b> or <b>Install app</b>.</p>
+        <p class="muted" style="margin:10px 0">MoniUsed will then open from your home screen like a normal app.</p>
+        <div class="form-actions"><button type="button" class="btn btn-dark" onclick="closeSheet()">Got it</button></div>`);
+    };
+
+    $('exportBtn').onclick = async () => {
+      const { data, error } = await sb.from('transactions')
+        .select('txn_date, type, title, category, amount')
+        .order('txn_date', { ascending: false });
+      if (error) return toast('Could not export. Try again.');
+      if (!data.length) return toast('No entries to export yet');
+      const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
+      const lines = [['Date', 'Type', 'Title', 'Category', 'Amount (NGN)'].join(',')]
+        .concat(data.map(e => [e.txn_date, e.type, q(e.title), q(e.category), e.amount].join(',')));
+      const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `moniused-entries-${today()}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('Export ready ✓');
+    };
+
+    $('deleteAllBtn').onclick = async () => {
+      const typed = prompt('This deletes ALL your entries forever.\nType DELETE to confirm.');
+      if (typed !== 'DELETE') return;
+      const { error } = await sb.from('transactions').delete().eq('user_id', user.id);
+      if (error) return toast('Could not delete. Try again.');
+      known.clear();
+      refreshAll();
+      loadProfileStats();
+      toast('All entries deleted');
+    };
 
     function setMonth(value) {
       selectedMonth = value || thisMonth();
@@ -611,7 +951,7 @@
       renderInsights(cur.data, prev.data);
     }
 
-    function refreshAll() { loadHome(); loadMonth(); }
+    function refreshAll() { loadHome(); loadMonth(); loadProfileStats(); }
 
     // ================= DRAW: ENTRY LISTS =================
     function entryRow(e, hideDate) {
@@ -632,7 +972,7 @@
 
     function renderList(list, elId, emptyText) {
       list.forEach(e => known.set(e.id, e));
-      $(elId).innerHTML = list.length ? list.map(entryRow).join('') : emptyHtml(emptyText);
+      $(elId).innerHTML = list.length ? list.map(e => entryRow(e)).join('') : emptyHtml(emptyText);
     }
 
     // Entries tab: grouped by day, with search
@@ -864,12 +1204,12 @@
       if (e.key === 'Enter' && e.target.tagName === 'INPUT') saveEntry();
     });
     // Tap the dark area outside the form to close it
-    $('entryDialog').addEventListener('click', (e) => {
-      if (e.target !== $('entryDialog')) return;
-      const r = $('entryDialog').getBoundingClientRect();
+    document.querySelectorAll('dialog').forEach(dlg => dlg.addEventListener('click', (e) => {
+      if (e.target !== dlg) return;
+      const r = dlg.getBoundingClientRect();
       const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
-      if (outside) closeForm();
-    });
+      if (outside) dlg.close();
+    }));
 
     $('logoutBtn').onclick = async () => {
       if (!confirm('Log out of MoniUsed?')) return;
