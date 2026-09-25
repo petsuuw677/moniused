@@ -124,7 +124,14 @@
       border: 2px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px;
       cursor: pointer; font: inherit; color: var(--ink);
     }
-    .choice:hover, .choice:focus-visible { border-color: var(--green); }
+    .choice:hover, .choice:focus-visible { border-color: #b9a6ee; }
+    .choice.selected { border-color: var(--green); background: var(--tint); }
+    .choice .grow { flex: 1; min-width: 0; }
+    .choice .tick { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); flex: 0 0 auto; position: relative; background: #fff; }
+    .choice.selected .tick { border-color: var(--green); background: var(--green); }
+    .choice.selected .tick::after { content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+    #welcomeDialog h2 { margin-bottom: 0; }
+    #welcomeGo:disabled { opacity: .45; cursor: not-allowed; }
     .choice .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex: 0 0 auto; }
     .choice .ic .ico { width: 24px; height: 24px; }
     .choice b { display: block; font-size: 17px; }
@@ -2048,36 +2055,69 @@
     }
 
     // ================= WELCOME QUESTION (new users, once) =================
+    // The user must pick one option and tap Continue before using the app.
     function askWhatToTrack() {
-      let answered = false;
+      let choice = null;
       const first = (profileName || '').split(' ')[0];
-      openSheet(`
-        <div class="sheet-head"><h2>Welcome${first ? ', ' + escapeHtml(first) : ''}!</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+      const d = document.createElement('dialog');
+      d.id = 'welcomeDialog';
+      d.setAttribute('aria-labelledby', 'welcomeTitle');
+      d.innerHTML = `
+        <h2 id="welcomeTitle">Welcome${first ? ', ' + escapeHtml(first) : ''}!</h2>
         <p class="welcome-sub">What do you want to track with MoniUsed?</p>
-        <button type="button" class="choice" data-track="0">
-          <span class="ic" style="background:#c9453d1f;color:#c9453d">${ic('trenddown')}</span>
-          <span><b>Just my spending</b><small>Record what you spend and see where your money goes.</small></span>
-        </button>
-        <button type="button" class="choice" data-track="1">
-          <span class="ic" style="background:#6633d91f;color:#6633d9">${ic('wallet')}</span>
-          <span><b>My income and spending</b><small>See what comes in, what goes out, and what's left.</small></span>
-        </button>
-        <p class="welcome-note">You can change this any time in Profile.</p>`);
+        <div role="radiogroup" aria-labelledby="welcomeTitle">
+          <button type="button" class="choice" role="radio" aria-checked="false" data-track="0">
+            <span class="ic" style="background:#c9453d1f;color:#c9453d">${ic('trenddown')}</span>
+            <span class="grow"><b>Just my spending</b><small>Record what you spend and see where your money goes.</small></span>
+            <span class="tick" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="choice" role="radio" aria-checked="false" data-track="1">
+            <span class="ic" style="background:#6633d91f;color:#6633d9">${ic('wallet')}</span>
+            <span class="grow"><b>My income and spending</b><small>See what comes in, what goes out, and what's left.</small></span>
+            <span class="tick" aria-hidden="true"></span>
+          </button>
+        </div>
+        <button type="button" class="btn btn-dark" id="welcomeGo" style="width:100%;margin-top:6px" disabled>Continue</button>
+        <p class="form-msg" id="welcomeMsg" style="text-align:center"></p>
+        <p class="welcome-note">You can change this any time in Profile.</p>`;
+      document.body.appendChild(d);
 
-      const save = async (track) => {
-        answered = true;
-        document.querySelectorAll('.choice').forEach(b => b.disabled = true);
-        const { error } = await sb.rpc('finish_onboarding', { track_income_choice: track });
-        if (!error) { trackIncome = track; paintIncome(); refreshAll(); }
-        closeSheet();
-        toast(track ? 'All set: income and spending ✓' : 'All set: spending only ✓');
+      // Can't be closed without choosing
+      d.addEventListener('cancel', (e) => e.preventDefault());
+      d.addEventListener('close', () => { if (choice === null || !d.dataset.done) d.showModal(); });
+
+      d.querySelectorAll('.choice').forEach(b => b.onclick = () => {
+        choice = b.dataset.track === '1';
+        d.querySelectorAll('.choice').forEach(x => {
+          const on = x === b;
+          x.classList.toggle('selected', on);
+          x.setAttribute('aria-checked', on);
+        });
+        $('welcomeGo').disabled = false;
+      });
+
+      $('welcomeGo').onclick = async () => {
+        if (choice === null) return;
+        $('welcomeGo').disabled = true;
+        $('welcomeMsg').textContent = '';
+        const { error } = await sb.rpc('finish_onboarding', { track_income_choice: choice });
+        if (error) {
+          $('welcomeGo').disabled = false;
+          $('welcomeMsg').textContent = 'Could not save. Check your internet and try again.';
+          return;
+        }
+        trackIncome = choice;
+        paintIncome();
+        refreshAll();
+        d.dataset.done = '1';
+        d.close();
+        d.remove();
+        toast(choice ? 'All set: income and spending ✓' : 'All set: spending only ✓');
+        if (window.MoniInstall) MoniInstall.autoShow();
       };
-      document.querySelectorAll('.choice').forEach(b => b.onclick = () => save(b.dataset.track === '1'));
 
-      // Closed without choosing: keep the default (income and spending) and don't ask again
-      $('sheet').addEventListener('close', () => {
-        if (!answered) sb.rpc('finish_onboarding', { track_income_choice: true }).then(() => {}, () => {});
-      }, { once: true });
+      d.showModal();
+      if (document.activeElement) document.activeElement.blur();   // nothing looks chosen until the user taps
     }
 
     // ================= TRACK INCOME SETTING =================
