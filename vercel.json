@@ -1,8 +1,15 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "moniused.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "moniused.vercel.app"
+        }
+      ],
       "destination": "https://moniused.com/:path*",
       "permanent": true
     }

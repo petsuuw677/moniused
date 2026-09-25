@@ -22,7 +22,7 @@
   <header class="site-header">
     <div class="wrap">
       <a href="/" class="logo"><img src="logo-mark.png" class="logo-mark" alt="">Moni<span>Used</span></a>
-      <nav class="nav"><a href="auth.html?mode=signup" class="btn btn-dark">Sign up free</a></nav>
+      <nav class="nav"><a href="/auth?mode=signup" class="btn btn-dark">Sign up free</a></nav>
     </div>
   </header>
 
@@ -41,6 +41,7 @@
       <li><b>Profile photo:</b> only if you choose to upload one.</li>
       <li><b>Plan:</b> which plan you're on (Starter, Plus or Premium).</li>
       <li><b>Basic activity:</b> when you joined and when you last added an entry.</li>
+      <li><b>Visit counts:</b> which pages are opened, whether on a phone or computer, and which website or app linked to MoniUsed. We use a random ID stored on your device, not cookies, and we don't collect IP addresses or link visits to your name.</li>
       <li><b>Agreement record:</b> the date you accepted our Terms and this Policy.</li>
       <li><b>Suggestions:</b> messages you send us from the app, with your name and email so we can reply.</li>
     </ul>
@@ -97,8 +98,11 @@
   <footer class="site-footer">
     <div class="wrap">
       <span>© 2026 MoniUsed</span>
-      <span><a href="terms.html">Terms of Service</a> · <a href="/">Home</a></span>
+      <span><a href="/terms">Terms of Service</a> · <a href="/">Home</a></span>
     </div>
   </footer>
+  <script>window.supabase = window.supabase || { createClient: () => null };</script>
+  <script src="config.js"></script>
+  <script src="track.js" defer></script>
 </body>
 </html>

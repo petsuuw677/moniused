@@ -2,7 +2,7 @@
   "name": "MoniUsed — Expense Tracker",
   "short_name": "MoniUsed",
   "description": "Track your income and expenses in Naira.",
-  "start_url": "/dashboard.html",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#eee8ff",

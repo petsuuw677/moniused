@@ -112,7 +112,7 @@
 
         <label class="agree" for="agreeBox">
           <input type="checkbox" id="agreeBox">
-          <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</span>
+          <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</span>
         </label>
 
         <button type="button" id="signupBtn" class="btn btn-dark submit">Create account</button>
@@ -174,12 +174,13 @@
     </div>
 
     <p class="small-link"><a href="/">Back to homepage</a></p>
-    <p class="legal-links"><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a></p>
+    <p class="legal-links"><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></p>
   </div>
 
   <!-- Supabase library, then your connection file -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="track.js" defer></script>
 
   <script>
     // ---------- Helpers ----------
@@ -254,7 +255,7 @@
 
     // ---------- If already logged in, go straight to the dashboard ----------
     sb.auth.getSession().then(({ data }) => {
-      if (data.session) location.href = 'dashboard.html';
+      if (data.session) location.href = '/dashboard';
     });
 
     // ---------- Log in ----------
@@ -278,7 +279,7 @@
         }
         return showMsg(friendlyError(error), 'error');
       }
-      location.href = 'dashboard.html';
+      location.href = '/dashboard';
     }
     $('loginBtn').onclick = logIn;
 
@@ -317,7 +318,7 @@
       }
 
       if (data.session) {
-        location.href = 'dashboard.html';   // email codes are switched off
+        location.href = '/dashboard';   // email codes are switched off
       } else {
         openVerify(email);                    // a code was emailed
         startCountdown($('verifyResend'));
@@ -357,7 +358,7 @@
 
       if (error) return showMsg(friendlyError(error), 'error');
       showMsg('Email confirmed ✓ Opening MoniUsed...', 'ok');
-      location.href = 'dashboard.html';
+      location.href = '/dashboard';
     }
     $('verifyBtn').onclick = verifySignup;
     $('verifyCode').oninput = () => {
@@ -426,7 +427,7 @@
       if (error) return showMsg(friendlyError(error), 'error');
 
       showMsg('Password changed ✓ Opening MoniUsed...', 'ok');
-      setTimeout(() => location.href = 'dashboard.html', 900);
+      setTimeout(() => location.href = '/dashboard', 900);
     };
 
     // Press Enter to submit

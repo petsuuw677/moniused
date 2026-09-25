@@ -170,7 +170,7 @@
 
   function autoShow() {
     if (isInstalled()) return;
-    const forced = new URLSearchParams(location.search).get('guide') === '1';   // for testing: dashboard.html?guide=1
+    const forced = new URLSearchParams(location.search).get('guide') === '1';   // for testing: /dashboard?guide=1
     let until = 0;
     try { until = Number(localStorage.getItem(LATER_KEY)) || 0; } catch (e) {}
     if (!forced && Date.now() < until) return;

@@ -22,7 +22,7 @@
   <header class="site-header">
     <div class="wrap">
       <a href="/" class="logo"><img src="logo-mark.png" class="logo-mark" alt="">Moni<span>Used</span></a>
-      <nav class="nav"><a href="auth.html?mode=signup" class="btn btn-dark">Sign up free</a></nav>
+      <nav class="nav"><a href="/auth?mode=signup" class="btn btn-dark">Sign up free</a></nav>
     </div>
   </header>
 
@@ -35,7 +35,7 @@
     </div>
 
     <h2>1. Who we are</h2>
-    <p>MoniUsed ("we", "us") is a personal expense-tracking app for people in Nigeria, available at moniused.com. By creating an account or using MoniUsed, you agree to these Terms and to our <a href="privacy.html">Privacy Policy</a>.</p>
+    <p>MoniUsed ("we", "us") is a personal expense-tracking app for people in Nigeria, available at moniused.com. By creating an account or using MoniUsed, you agree to these Terms and to our <a href="/privacy">Privacy Policy</a>.</p>
 
     <h2>2. What MoniUsed is, and isn't</h2>
     <ul>
@@ -71,7 +71,7 @@
     </ul>
 
     <h2>6. Your records</h2>
-    <p>The entries you add belong to you. You can export or delete them from your Profile at any time. We only use them to run MoniUsed for you, as explained in the <a href="privacy.html">Privacy Policy</a>.</p>
+    <p>The entries you add belong to you. You can export or delete them from your Profile at any time. We only use them to run MoniUsed for you, as explained in the <a href="/privacy">Privacy Policy</a>.</p>
 
     <h2>7. Availability</h2>
     <p>We work hard to keep MoniUsed running, but we can't promise it will always be available or free of errors. We may change, add or remove features. Keep your own copy of anything important by using the export option.</p>
@@ -95,8 +95,11 @@
   <footer class="site-footer">
     <div class="wrap">
       <span>© 2026 MoniUsed</span>
-      <span><a href="privacy.html">Privacy Policy</a> · <a href="/">Home</a></span>
+      <span><a href="/privacy">Privacy Policy</a> · <a href="/">Home</a></span>
     </div>
   </footer>
+  <script>window.supabase = window.supabase || { createClient: () => null };</script>
+  <script src="config.js"></script>
+  <script src="track.js" defer></script>
 </body>
 </html>

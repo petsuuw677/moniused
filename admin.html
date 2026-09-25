@@ -58,6 +58,24 @@
     .plan-select:disabled { opacity: .5; }
     #fbPanel { margin-bottom: 20px; }
     #adPanel { margin-bottom: 20px; }
+    #visPanel { margin-bottom: 20px; }
+    .range { display: flex; background: var(--soft); border-radius: 999px; padding: 4px; }
+    .range button { border: 0; background: none; padding: 7px 14px; border-radius: 999px; font: 700 14px var(--body); color: var(--muted); cursor: pointer; }
+    .range button.on { background: var(--ink); color: #fff; }
+    .vis-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .vis-nums div { background: var(--soft); border-radius: 12px; padding: 12px 14px; }
+    .vis-nums span { display: block; color: var(--muted); font-size: 13px; font-weight: 600; }
+    .vis-nums strong { display: block; font-family: var(--head); font-size: 28px; line-height: 1.2; }
+    .vis-nums small { color: var(--muted); font-size: 12.5px; }
+    .bars { display: flex; align-items: flex-end; gap: 3px; height: 150px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .bars .bar { flex: 1; background: var(--green); border-radius: 4px 4px 0 0; min-height: 2px; position: relative; }
+    .bars .bar:hover { background: var(--green-dark); }
+    .bars-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin: 6px 0 18px; }
+    .vis-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .vis-lists h3 { font-size: 15px; margin-bottom: 8px; font-family: var(--body); }
+    .vis-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 14px; padding: 5px 0; position: relative; }
+    .vis-row .fill { position: absolute; left: 0; top: 2px; bottom: 2px; background: var(--tint); border-radius: 6px; z-index: 0; }
+    .vis-row span, .vis-row b { position: relative; z-index: 1; padding: 0 8px; }
     .ad-form { display: none; border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 16px; background: var(--soft); }
     .ad-form.open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 20px; }
     @media (max-width: 760px) { .ad-form.open { grid-template-columns: 1fr; } }
@@ -135,9 +153,9 @@
 <body>
   <header class="admin-header">
     <div class="wrap">
-      <a href="admin.html" class="logo"><img src="logo-mark-white.png" class="logo-mark" alt="">Moni<span>Used</span><span class="tag">Admin</span></a>
+      <a href="/admin" class="logo"><img src="logo-mark-white.png" class="logo-mark" alt="">Moni<span>Used</span><span class="tag">Admin</span></a>
       <nav>
-        <a href="dashboard.html" class="btn btn-light">My dashboard</a>
+        <a href="/dashboard" class="btn btn-light">My dashboard</a>
         <button type="button" id="logoutBtn" class="btn btn-light">Log out</button>
       </nav>
     </div>
@@ -159,6 +177,31 @@
       <div class="plan-stat"><span>Plus</span><strong id="sPlanPlus">–</strong></div>
       <div class="plan-stat premium"><span>Premium</span><strong id="sPlanPremium">–</strong></div>
     </div>
+
+    <section class="panel" id="visPanel">
+      <div class="panel-top">
+        <h2>Visitors</h2>
+        <div class="range" role="group" aria-label="Time range">
+          <button type="button" data-days="7" aria-pressed="false">7 days</button>
+          <button type="button" data-days="30" class="on" aria-pressed="true">30 days</button>
+          <button type="button" data-days="90" aria-pressed="false">90 days</button>
+        </div>
+      </div>
+      <div class="vis-nums">
+        <div><span>Visitors</span><strong id="vVisitors">–</strong><small>people (devices)</small></div>
+        <div><span>Page visits</span><strong id="vViews">–</strong><small>pages opened</small></div>
+        <div><span>New sign-ups</span><strong id="vSignups">–</strong><small id="vRate">–</small></div>
+        <div><span>Used the app</span><strong id="vApp">–</strong><small id="vInstalled">–</small></div>
+      </div>
+      <div class="bars" id="vBars" aria-label="Visitors per day"></div>
+      <div class="bars-axis"><span id="vFrom"></span><span id="vTo"></span></div>
+      <div class="vis-lists">
+        <div><h3>Where they came from</h3><div id="vSources"></div></div>
+        <div><h3>Pages</h3><div id="vPages"></div></div>
+        <div><h3>Devices</h3><div id="vDevices"></div></div>
+      </div>
+      <p class="note">Tip: add <b>?s=</b> to links you share so you can see which one works, e.g. <b>moniused.com/?s=tiktok</b> or <b>moniused.com/?s=whatsapp</b>. Private: no cookies, no IP addresses, no names. WhatsApp and most apps don't say where a visitor came from, so those show as "direct".</p>
+    </section>
 
     <section class="panel" id="adPanel">
       <div class="panel-top">
@@ -184,8 +227,8 @@
               <input type="text" id="adCta" maxlength="20" value="Learn more">
             </div>
             <div>
-              <label for="adLinkUrl">Link <small>(https://)</small></label>
-              <input type="url" id="adLinkUrl" placeholder="https://...">
+              <label for="adLinkUrl">Link <small>(e.g. site.com)</small></label>
+              <input type="text" id="adLinkUrl" inputmode="url" autocapitalize="off" placeholder="e.g. piggyvest.com">
             </div>
           </div>
           <label for="adImage">Logo or image <small>(square works best)</small></label>
@@ -297,18 +340,58 @@
     async function init() {
       // 1. Must be logged in
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { location.href = 'auth.html'; return; }
+      if (!session) { location.href = '/auth'; return; }
 
       // 2. Must be an admin
       const { data: isAdmin, error } = await sb.rpc('is_admin');
-      if (error || !isAdmin) { location.href = 'dashboard.html'; return; }
+      if (error || !isAdmin) { location.href = '/dashboard'; return; }
 
       loadStats();
+      loadVisitors(30);
       loadAds();
       loadFeedback();
       loadUsers();
       loadDeleted();
     }
+
+    // ---------- Visitors ----------
+    const PAGE_NAMES = { '/': 'Homepage', '/auth': 'Log in / Sign up', '/dashboard': 'App (dashboard)', '/terms': 'Terms', '/privacy': 'Privacy', '/other': 'Other' };
+    const shortDate = (d) => new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
+
+    function visList(el, rows, nameFn) {
+      if (!rows.length) { $(el).innerHTML = '<p class="muted" style="font-size:14px">No visits yet.</p>'; return; }
+      const max = Math.max(...rows.map(r => r.visitors));
+      $(el).innerHTML = rows.map(r => `
+        <div class="vis-row"><i class="fill" style="width:${Math.max(4, r.visitors / max * 100)}%"></i>
+          <span>${escapeHtml(nameFn ? nameFn(r.name) : r.name)}</span><b>${num(r.visitors)}</b></div>`).join('');
+    }
+
+    async function loadVisitors(days) {
+      document.querySelectorAll('.range button').forEach(b => {
+        const on = Number(b.dataset.days) === days; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      });
+      const { data: v, error } = await sb.rpc('admin_visit_stats', { days });
+      if (error || !v) { $('vBars').innerHTML = '<p class="muted" style="margin:auto">Could not load visitors.</p>'; return; }
+
+      $('vVisitors').textContent = num(v.visitors);
+      $('vViews').textContent = num(v.views);
+      $('vSignups').textContent = num(v.signups);
+      $('vRate').textContent = v.visitors ? `${(v.signups / v.visitors * 100).toFixed(1)}% of visitors` : 'of visitors';
+      $('vApp').textContent = num(v.app_users);
+      $('vInstalled').textContent = `${num(v.installed)} from the installed app`;
+
+      const max = Math.max(1, ...v.daily.map(d => d.visitors));
+      $('vBars').innerHTML = v.daily.map(d =>
+        `<div class="bar" style="height:${d.visitors / max * 100}%" title="${shortDate(d.day)}: ${d.visitors} visitors"></div>`).join('');
+      $('vFrom').textContent = v.daily.length ? shortDate(v.daily[0].day) : '';
+      $('vTo').textContent = 'Today';
+
+      const SRC = { direct: 'Direct / WhatsApp / typed', tiktok: 'TikTok', x: 'X (Twitter)', whatsapp: 'WhatsApp', linkedin: 'LinkedIn' };
+      visList('vSources', v.sources, n => SRC[n] || n.charAt(0).toUpperCase() + n.slice(1));
+      visList('vPages', v.pages, n => PAGE_NAMES[n] || n);
+      visList('vDevices', v.devices, n => n.charAt(0).toUpperCase() + n.slice(1));
+    }
+    document.querySelectorAll('.range button').forEach(b => b.onclick = () => loadVisitors(Number(b.dataset.days)));
 
     // ---------- Adverts ----------
     let ads = [];
@@ -397,11 +480,19 @@
       }).join('');
     }
 
+    // Accept "moniused.com" or "www.site.com" and add https:// automatically
+    function fixLink(v) {
+      v = v.trim();
+      if (!v) return '';
+      if (/^http:\/\//i.test(v)) return 'https://' + v.slice(7);
+      if (!/^https:\/\//i.test(v)) return 'https://' + v;
+      return v;
+    }
     function readForm() {
       return {
         advertiser: $('adAdvertiser').value.trim(), headline: $('adHeadline').value.trim(),
         body: $('adBody').value.trim() || null, cta_label: $('adCta').value.trim() || 'Learn more',
-        link_url: $('adLinkUrl').value.trim(), starts_on: $('adStart').value, ends_on: $('adEnd').value,
+        link_url: fixLink($('adLinkUrl').value), starts_on: $('adStart').value, ends_on: $('adEnd').value,
         active: $('adActive').checked
       };
     }
@@ -461,7 +552,7 @@
       const f = readForm();
       const msg = $('adMsg');
       if (!f.advertiser || !f.headline) return msg.textContent = 'Add the company name and a headline.';
-      if (!/^https:\/\/\S+\.\S+/.test(f.link_url)) return msg.textContent = 'The link must start with https://';
+      if (!/^https:\/\/[^\s.]+\.\S+/.test(f.link_url)) return msg.textContent = 'Enter a website link, like moniused.com';
       if (!f.starts_on || !f.ends_on || f.ends_on < f.starts_on) return msg.textContent = 'Check the dates. The end date must be on or after the start date.';
 
       $('adSave').disabled = true; msg.textContent = '';
@@ -694,7 +785,7 @@
 
     $('logoutBtn').onclick = async () => {
       await sb.auth.signOut();
-      location.href = 'auth.html';
+      location.href = '/auth';
     };
 
     init();

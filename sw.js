@@ -1,10 +1,9 @@
 // MoniUsed service worker
 // Change the version number whenever you want phones to refresh their saved copy.
-const CACHE = 'moniused-v3';
+const CACHE = 'moniused-v4';
 
 const FILES = [
-  '/', '/index.html', '/auth.html', '/dashboard.html', '/admin.html',
-  '/terms.html', '/privacy.html',
+  '/', '/auth', '/dashboard', '/admin', '/terms', '/privacy',
   '/style.css', '/config.js', '/install.js', '/manifest.json', '/logo-mark.png', '/favicon.png',
   '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'
 ];
@@ -33,10 +32,13 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(req)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((cache) => cache.put(req, copy));
+        // Only save normal, successful pages (not redirects)
+        if (res.ok && res.type === 'basic' && !res.redirected) {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(req, copy));
+        }
         return res;
       })
-      .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('/index.html')))
+      .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('/')))
   );
 });
