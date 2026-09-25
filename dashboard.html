@@ -115,7 +115,28 @@
       border-radius: 50%; background: var(--lemon); opacity: .95;
     }
     .balance-card > * { position: relative; z-index: 1; }
-    .balance-card .label { font-size: 14px; font-weight: 600; color: #cfe7dc; }
+    .balance-card .label { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.82); }
+    .balance-card .carried { font-size: 13px; color: rgba(255,255,255,.85); margin: -10px 0 14px; }
+    body.expense-only .income-only { display: none !important; }
+    .welcome-sub { color: var(--muted); font-size: 15.5px; margin: 2px 0 16px; }
+    .choice {
+      display: flex; gap: 14px; align-items: center; width: 100%; text-align: left; background: #fff;
+      border: 2px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px;
+      cursor: pointer; font: inherit; color: var(--ink);
+    }
+    .choice:hover, .choice:focus-visible { border-color: var(--green); }
+    .choice .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex: 0 0 auto; }
+    .choice .ic .ico { width: 24px; height: 24px; }
+    .choice b { display: block; font-size: 17px; }
+    .choice small { display: block; color: var(--muted); font-size: 14px; line-height: 1.4; margin-top: 2px; }
+    .choice:disabled { opacity: .6; cursor: wait; }
+    .welcome-note { text-align: center; color: var(--muted); font-size: 13.5px; margin-top: 6px; }
+    body.expense-only .add-row { grid-template-columns: 1fr; }
+    .switch { width: 46px; height: 28px; border-radius: 999px; background: #c9c2d8; position: relative; flex: 0 0 auto; transition: background .15s; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: left .15s; }
+    .switch.on { background: var(--green); }
+    .switch.on::after { left: 21px; }
+    .set-row .grow small { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; line-height: 1.35; margin-top: 2px; }
     .balance-card .big {
       font-family: var(--head); font-weight: 800; font-size: clamp(34px, 9vw, 46px);
       letter-spacing: -1px; margin: 4px 0 16px; font-variant-numeric: tabular-nums;
@@ -530,16 +551,17 @@
     <div class="balance-card">
       <span class="label" id="homeMonth">Left this month</span>
       <div class="big" id="homeLeft"><span class="skel on-dark" style="width:150px;height:42px"></span></div>
+      <p class="carried" id="homeCarried" hidden></p>
       <div class="inout">
-        <div><span>↓ Money in</span><strong id="homeIn"><span class="skel on-dark" style="width:90px;height:20px"></span></strong></div>
-        <div><span>↑ Money out</span><strong id="homeOut"><span class="skel on-dark" style="width:90px;height:20px"></span></strong></div>
+        <div><span id="homeInLabel">↓ Money in</span><strong id="homeIn"><span class="skel on-dark" style="width:90px;height:20px"></span></strong></div>
+        <div><span id="homeOutLabel">↑ Money out</span><strong id="homeOut"><span class="skel on-dark" style="width:90px;height:20px"></span></strong></div>
       </div>
       <p class="compare" id="homeCompare"></p>
     </div>
 
     <div class="add-row">
       <button type="button" class="btn btn-dark" onclick="openForm(null, 'expense')">− Add expense</button>
-      <button type="button" class="btn btn-income" onclick="openForm(null, 'income')">+ Add income</button>
+      <button type="button" class="btn btn-income income-only" onclick="openForm(null, 'income')">+ Add income</button>
     </div>
 
     <div id="quickArea" class="hidden">
@@ -565,7 +587,7 @@
       <h1>Entries</h1>
       <div class="controls">
         <button type="button" class="btn btn-dark" onclick="openForm(null, 'expense')">+ Expense</button>
-        <button type="button" class="btn btn-income" onclick="openForm(null, 'income')">+ Income</button>
+        <button type="button" class="btn btn-income income-only" onclick="openForm(null, 'income')">+ Income</button>
       </div>
     </div>
     <div class="controls" style="margin-bottom:12px">
@@ -599,9 +621,9 @@
 
     <section class="panel">
       <h2>Month summary</h2>
-      <div class="info-row"><span>Money in</span><span class="amt in" id="insIn"><span class="skel" style="width:80px;height:16px"></span></span></div>
+      <div class="info-row income-only"><span>Money in</span><span class="amt in" id="insIn"><span class="skel" style="width:80px;height:16px"></span></span></div>
       <div class="info-row"><span>Money out</span><span class="amt" id="insOut"><span class="skel" style="width:80px;height:16px"></span></span></div>
-      <div class="info-row"><span>Left</span><span class="amt" id="insLeft"><span class="skel" style="width:80px;height:16px"></span></span></div>
+      <div class="info-row income-only"><span>Left</span><span class="amt" id="insLeft"><span class="skel" style="width:80px;height:16px"></span></span></div>
     </section>
   </main>
 
@@ -645,6 +667,20 @@
       </button>
       <button type="button" class="set-row" id="passwordBtn">
         <span class="set-icon" style="background:#7b61d126;color:#7b61d1"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="grow">Change password</span><span class="chev">›</span>
+      </button>
+    </div>
+
+    <p class="group-label">Preferences</p>
+    <div class="settings">
+      <button type="button" class="set-row" id="incomeBtn" role="switch" aria-checked="true">
+        <span class="set-icon" style="background:#6633d926;color:#6633d9"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
+        <span class="grow">Track income too<small>Turn off if you only want to record what you spend.</small></span>
+        <span class="switch on" id="incomeSwitch" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="set-row income-only" id="carryBtn" role="switch" aria-checked="false">
+        <span class="set-icon" style="background:#1f9d6b26;color:#1f9d6b"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></span>
+        <span class="grow">Carry leftover to next month<small>Money you didn't spend is added to your balance next month.</small></span>
+        <span class="switch" id="carrySwitch" aria-hidden="true"></span>
       </button>
     </div>
 
@@ -927,6 +963,8 @@
     let profileCreated = null;
     let notifications = [];
     let currentPlan = 'starter';
+    let carryOver = false;
+    let trackIncome = true;
     let avatarUrl = null;
     let billing = 'monthly';
 
@@ -954,7 +992,7 @@
       showTab();
 
       const { data: profile } = await sb.from('profiles')
-        .select('full_name, role, created_at, plan, avatar_url').eq('id', user.id).single();
+        .select('full_name, role, created_at, plan, avatar_url, carry_over, track_income, onboarded').eq('id', user.id).single();
 
       profileName = (profile && profile.full_name) || '';
       profileCreated = (profile && profile.created_at) || user.created_at;
@@ -967,6 +1005,11 @@
       if (profile && profile.role === 'admin') addAdminSection();
 
       currentPlan = (profile && profile.plan) || 'starter';
+      carryOver = !!(profile && profile.carry_over === true);
+      trackIncome = !(profile && profile.track_income === false);
+      paintCarry();
+      paintIncome();
+      if (profile && profile.onboarded === false) askWhatToTrack();
       showPlan();
 
       setMonth(thisMonth());
@@ -1039,11 +1082,40 @@
 
       // Balance card
       const s = sums(cur.data);
-      $('homeMonth').textContent = 'Left in ' + monthName(month, true);
-      $('homeLeft').textContent = signedNaira(s.left);
-      $('homeLeft').classList.toggle('neg', s.left < 0);
+      let carried = 0;
+      if (carryOver && trackIncome) {
+        const { data: before, error: bErr } = await sb.rpc('my_balance_before', { before: monthRange(month).start });
+        if (!bErr) carried = Number(before) || 0;
+      }
+      if (!trackIncome) {
+        // Expenses-only mode: show what was spent, today and in the last 7 days
+        const t = today();
+        const d7 = new Date(); d7.setDate(d7.getDate() - 6);
+        const since = d7.getFullYear() + '-' + pad(d7.getMonth() + 1) + '-' + pad(d7.getDate());
+        const spent = (list, test) => list.filter(e => e.type === 'expense' && test(e)).reduce((a, e) => a + Number(e.amount), 0);
+        const all = cur.data.concat(prev.data);
+        $('homeMonth').textContent = 'Spent in ' + monthName(month, true);
+        $('homeLeft').textContent = naira(s.totalOut);
+        $('homeLeft').classList.remove('neg');
+        $('homeCarried').hidden = true;
+        $('homeInLabel').textContent = 'Today';
+        $('homeOutLabel').textContent = 'Last 7 days';
+        $('homeIn').textContent = naira(spent(cur.data, e => e.txn_date === t));
+        $('homeOut').textContent = naira(spent(all, e => e.txn_date >= since && e.txn_date <= t));
+      } else {
+      $('homeInLabel').textContent = '↓ Money in';
+      $('homeOutLabel').textContent = '↑ Money out';
+      const shown = s.left + carried;
+      $('homeMonth').textContent = carryOver ? 'Your balance' : 'Left in ' + monthName(month, true);
+      $('homeLeft').textContent = signedNaira(shown);
+      $('homeLeft').classList.toggle('neg', shown < 0);
+      $('homeCarried').hidden = !(carryOver && carried !== 0);
+      $('homeCarried').textContent = carried >= 0
+        ? `Includes ${naira(carried)} carried over from before ${monthName(month, true)}`
+        : `Includes −${naira(-carried)} carried over (you spent more than you earned before ${monthName(month, true)})`;
       $('homeIn').textContent = naira(s.totalIn);
       $('homeOut').textContent = naira(s.totalOut);
+      }
 
       // Comparison with last month
       const lastOut = sums(prev.data).totalOut;
@@ -1145,11 +1217,11 @@
         n.push({ id: 'eighty-' + month, icon: ic('hourglass'), color: '#d9a400',
           title: `80% of ${lastName}'s spending`, text: `You've spent ${naira(s.totalOut)} so far. ${lastName} total was ${naira(lastOut)}.` });
       }
-      if (s.totalIn > 0 && s.left < 0) {
+      if (trackIncome && s.totalIn > 0 && s.left < 0) {
         n.push({ id: 'neg-' + month, icon: ic('trenddown'), color: '#c9453d',
           title: 'Spending more than you earn', text: `You've spent ${naira(-s.left)} more than you earned this month.` });
       }
-      if (s.totalIn === 0 && s.totalOut > 0) {
+      if (trackIncome && s.totalIn === 0 && s.totalOut > 0) {
         n.push({ id: 'noinc-' + month, icon: ic('briefcase'), color: '#0b5d45',
           title: 'Add your income', text: 'Record what came in this month so MoniUsed can show what\'s left.' });
       }
@@ -1726,7 +1798,7 @@
 
       const s = sums(list);
       $('entriesSummary').textContent =
-        `${monthName(selectedMonth)} · In ${naira(s.totalIn)} · Out ${naira(s.totalOut)}`;
+        (trackIncome ? `${monthName(selectedMonth)} · In ${naira(s.totalIn)} · Out ${naira(s.totalOut)}` : `${monthName(selectedMonth)} · Spent ${naira(s.totalOut)}`);
 
       if (list.length === 0) {
         $('entryList').innerHTML = q
@@ -1975,6 +2047,76 @@
       toast('Entry restored ✓');
     }
 
+    // ================= WELCOME QUESTION (new users, once) =================
+    function askWhatToTrack() {
+      let answered = false;
+      const first = (profileName || '').split(' ')[0];
+      openSheet(`
+        <div class="sheet-head"><h2>Welcome${first ? ', ' + escapeHtml(first) : ''}!</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <p class="welcome-sub">What do you want to track with MoniUsed?</p>
+        <button type="button" class="choice" data-track="0">
+          <span class="ic" style="background:#c9453d1f;color:#c9453d">${ic('trenddown')}</span>
+          <span><b>Just my spending</b><small>Record what you spend and see where your money goes.</small></span>
+        </button>
+        <button type="button" class="choice" data-track="1">
+          <span class="ic" style="background:#6633d91f;color:#6633d9">${ic('wallet')}</span>
+          <span><b>My income and spending</b><small>See what comes in, what goes out, and what's left.</small></span>
+        </button>
+        <p class="welcome-note">You can change this any time in Profile.</p>`);
+
+      const save = async (track) => {
+        answered = true;
+        document.querySelectorAll('.choice').forEach(b => b.disabled = true);
+        const { error } = await sb.rpc('finish_onboarding', { track_income_choice: track });
+        if (!error) { trackIncome = track; paintIncome(); refreshAll(); }
+        closeSheet();
+        toast(track ? 'All set: income and spending ✓' : 'All set: spending only ✓');
+      };
+      document.querySelectorAll('.choice').forEach(b => b.onclick = () => save(b.dataset.track === '1'));
+
+      // Closed without choosing: keep the default (income and spending) and don't ask again
+      $('sheet').addEventListener('close', () => {
+        if (!answered) sb.rpc('finish_onboarding', { track_income_choice: true }).then(() => {}, () => {});
+      }, { once: true });
+    }
+
+    // ================= TRACK INCOME SETTING =================
+    function paintIncome() {
+      document.body.classList.toggle('expense-only', !trackIncome);
+      $('incomeSwitch').classList.toggle('on', trackIncome);
+      $('incomeBtn').setAttribute('aria-checked', trackIncome);
+    }
+    $('incomeBtn').onclick = async () => {
+      trackIncome = !trackIncome;
+      paintIncome();
+      const { error } = await sb.rpc('set_track_income', { val: trackIncome });
+      if (error) {
+        trackIncome = !trackIncome; paintIncome();
+        toast('Could not save. Try again.');
+        return;
+      }
+      toast(trackIncome ? 'Income tracking is on ✓' : 'Expenses only ✓');
+      refreshAll();
+    };
+
+    // ================= CARRY LEFTOVER SETTING =================
+    function paintCarry() {
+      $('carrySwitch').classList.toggle('on', carryOver);
+      $('carryBtn').setAttribute('aria-checked', carryOver);
+    }
+    $('carryBtn').onclick = async () => {
+      carryOver = !carryOver;
+      paintCarry();
+      const { error } = await sb.rpc('set_carry_over', { val: carryOver });
+      if (error) {
+        carryOver = !carryOver; paintCarry();
+        toast('Could not save. Try again.');
+        return;
+      }
+      toast(carryOver ? 'Leftover will carry over ✓' : 'Each month starts from ₦0');
+      loadHome();
+    };
+
     // ================= SPONSORED CARD =================
     // One advert on Home, for Starter users only. Everyone sees the same adverts (no targeting).
     // A new advert each time the app opens, taking turns in order.
@@ -1984,8 +2126,14 @@
       if (currentPlan !== 'starter') return;
       const day = today();
 
-      const { data, error } = await sb.from('ads')
-        .select('id, advertiser, headline, body, cta_label, link_url, image_url');
+      // Only live adverts (admins can otherwise see scheduled, ended or switched-off ones too)
+      const [adsRes, setRes] = await Promise.all([
+        sb.from('ads').select('id, advertiser, headline, body, cta_label, link_url, image_url')
+          .eq('active', true).lte('starts_on', day).gte('ends_on', day),
+        sb.from('app_settings').select('ads_enabled').eq('id', 1).maybeSingle()
+      ]);
+      if (setRes.data && setRes.data.ads_enabled === false) return;
+      const { data, error } = adsRes;
       if (error || !data || !data.length) return;
 
       // Adverts take turns: a different one each time the app is opened
@@ -2009,15 +2157,29 @@
           </div>
         </div>`;
 
-      // Count a view once per advert per day on this device.
-      // (.then() is needed: the request is only sent when we wait for its answer.)
-      const countAd = (kind) => sb.rpc('ad_event', { ad_id: ad.id, kind })
-        .then(({ error }) => !error, () => false);
-      const seenKey = 'mu_ad_seen_' + ad.id;
+      // Count views and clicks. Sent with "keepalive" so the request still goes through
+      // even when the tap opens WhatsApp or another app straight away.
+      const { data: { session } } = await sb.auth.getSession();
+      const token = session && session.access_token;
+      const countAd = (kind) => {
+        try {
+          return fetch(SUPABASE_URL + '/rest/v1/rpc/ad_event', {
+            method: 'POST',
+            keepalive: true,
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_KEY,
+              ...(token ? { Authorization: 'Bearer ' + token } : {})
+            },
+            body: JSON.stringify({ ad_id: ad.id, kind })
+          }).then(r => r.ok, () => false);
+        } catch (e) { return Promise.resolve(false); }
+      };
+      const seenKey = 'mu_adview_' + ad.id;   // new name, so earlier failed counts don't block today
       if (localStorage.getItem(seenKey) !== day) {
         countAd('view').then(ok => { if (ok) localStorage.setItem(seenKey, day); });
       }
-      $('adLink').onclick = () => { countAd('click'); };
+      $('adLink').addEventListener('click', () => { countAd('click'); });
     }
 
     // ================= APP LOCK (PIN) =================
