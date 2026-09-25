@@ -394,6 +394,21 @@
     .btn-danger { background: var(--red); color: #fff; border: 0; }
     .btn-danger:disabled { opacity: .6; }
 
+    /* ---------- Loading skeletons ---------- */
+    .skel {
+      display: inline-block; vertical-align: middle; border-radius: 8px;
+      background: linear-gradient(90deg, #ece7f7 0%, #f7f4fd 50%, #ece7f7 100%);
+      background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite;
+    }
+    .skel.on-dark { background: linear-gradient(90deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.3) 50%, rgba(255,255,255,.14) 100%); background-size: 200% 100%; }
+    .skel-circle { width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto; }
+    .skel-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; list-style: none; }
+    .skel-lines { flex: 1; display: grid; gap: 7px; }
+    .skel-donut { display: block; width: 180px; height: 180px; border-radius: 50%; margin: 10px auto 18px; }
+    .avatar.loading { background: linear-gradient(90deg, #e6dff7 0%, #f5f1fd 50%, #e6dff7 100%); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; color: transparent; }
+    @keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+    @media (prefers-reduced-motion: reduce) { .skel, .avatar.loading { animation: none; } }
+
     /* ---------- Sponsored card ---------- */
     .ad-card {
       position: relative; display: flex; gap: 12px; align-items: center; background: #fff;
@@ -479,7 +494,7 @@
           <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           <span class="badge hidden" id="bellBadge"></span>
         </button>
-        <a href="#profile" class="avatar" id="headAvatar" aria-label="Profile">–</a>
+        <a href="#profile" class="avatar loading" id="headAvatar" aria-label="Profile"></a>
       </div>
     </div>
   </header>
@@ -502,14 +517,14 @@
 
   <!-- ================= HOME ================= -->
   <main class="wrap view" id="view-home">
-    <p class="greet" id="greet">Hello</p>
+    <p class="greet" id="greet"><span class="skel" style="width:62%;height:30px"></span></p>
 
     <div class="balance-card">
       <span class="label" id="homeMonth">Left this month</span>
-      <div class="big" id="homeLeft">₦0</div>
+      <div class="big" id="homeLeft"><span class="skel on-dark" style="width:150px;height:42px"></span></div>
       <div class="inout">
-        <div><span>↓ Money in</span><strong id="homeIn">₦0</strong></div>
-        <div><span>↑ Money out</span><strong id="homeOut">₦0</strong></div>
+        <div><span>↓ Money in</span><strong id="homeIn"><span class="skel on-dark" style="width:90px;height:20px"></span></strong></div>
+        <div><span>↑ Money out</span><strong id="homeOut"><span class="skel on-dark" style="width:90px;height:20px"></span></strong></div>
       </div>
       <p class="compare" id="homeCompare"></p>
     </div>
@@ -532,7 +547,7 @@
         <h2>Recent</h2>
         <a href="#entries">See all</a>
       </div>
-      <ul class="entries" id="recentList"><li class="empty">Loading...</li></ul>
+      <ul class="entries" id="recentList"><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:58%;height:14px"></span><span class="skel" style="width:34%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:46%;height:14px"></span><span class="skel" style="width:40%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:62%;height:14px"></span><span class="skel" style="width:28%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:50%;height:14px"></span><span class="skel" style="width:36%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li></ul>
     </section>
   </main>
 
@@ -551,7 +566,7 @@
     <section class="panel">
       <input type="search" id="search" class="search" placeholder="Search e.g. Bolt, food, salary" aria-label="Search entries">
       <p class="month-summary" id="entriesSummary"></p>
-      <ul class="entries" id="entryList"><li class="empty">Loading...</li></ul>
+      <ul class="entries" id="entryList"><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:58%;height:14px"></span><span class="skel" style="width:34%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:46%;height:14px"></span><span class="skel" style="width:40%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:62%;height:14px"></span><span class="skel" style="width:28%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:50%;height:14px"></span><span class="skel" style="width:36%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li></ul>
     </section>
   </main>
 
@@ -563,22 +578,22 @@
     </div>
 
     <div class="stat-grid">
-      <div class="stat"><span>Daily average</span><strong id="insAvg">₦0</strong><small>spent per day</small></div>
-      <div class="stat"><span>Biggest expense</span><strong id="insBig">₦0</strong><small id="insBigName">–</small></div>
-      <div class="stat"><span>vs last month</span><strong id="insVs">–</strong><small id="insVsNote">in spending</small></div>
+      <div class="stat"><span>Daily average</span><strong id="insAvg"><span class="skel" style="width:70%;height:20px"></span></strong><small>spent per day</small></div>
+      <div class="stat"><span>Biggest expense</span><strong id="insBig"><span class="skel" style="width:70%;height:20px"></span></strong><small id="insBigName">–</small></div>
+      <div class="stat"><span>vs last month</span><strong id="insVs"><span class="skel" style="width:50%;height:20px"></span></strong><small id="insVsNote">in spending</small></div>
     </div>
 
     <section class="panel">
       <h2>Where your moni went</h2>
-      <div id="donutArea"></div>
-      <div id="legend"><p class="empty">No spending this month.</p></div>
+      <div id="donutArea"><span class="skel skel-donut"></span></div>
+      <div id="legend"><ul class="entries"><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:58%;height:14px"></span><span class="skel" style="width:34%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:58%;height:14px"></span><span class="skel" style="width:34%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li><li class="skel-row" aria-hidden="true"><span class="skel skel-circle"></span><span class="skel-lines"><span class="skel" style="width:58%;height:14px"></span><span class="skel" style="width:34%;height:11px"></span></span><span class="skel" style="width:64px;height:14px"></span></li></ul></div>
     </section>
 
     <section class="panel">
       <h2>Month summary</h2>
-      <div class="info-row"><span>Money in</span><span class="amt in" id="insIn">₦0</span></div>
-      <div class="info-row"><span>Money out</span><span class="amt" id="insOut">₦0</span></div>
-      <div class="info-row"><span>Left</span><span class="amt" id="insLeft">₦0</span></div>
+      <div class="info-row"><span>Money in</span><span class="amt in" id="insIn"><span class="skel" style="width:80px;height:16px"></span></span></div>
+      <div class="info-row"><span>Money out</span><span class="amt" id="insOut"><span class="skel" style="width:80px;height:16px"></span></span></div>
+      <div class="info-row"><span>Left</span><span class="amt" id="insLeft"><span class="skel" style="width:80px;height:16px"></span></span></div>
     </section>
   </main>
 
@@ -599,9 +614,9 @@
     </section>
 
     <div class="mini-stats">
-      <div><strong id="stEntries">–</strong><span>Entries</span></div>
-      <div><strong id="stDays">–</strong><span>Days tracked</span></div>
-      <div><strong id="stStreak">–</strong><span>Day streak</span></div>
+      <div><strong id="stEntries"><span class="skel" style="width:36px;height:20px"></span></strong><span>Entries</span></div>
+      <div><strong id="stDays"><span class="skel" style="width:36px;height:20px"></span></strong><span>Days tracked</span></div>
+      <div><strong id="stStreak"><span class="skel" style="width:36px;height:20px"></span></strong><span>Day streak</span></div>
     </div>
 
     <p class="group-label">Plan</p>
@@ -951,6 +966,7 @@
 
     function paintAvatar(el) {
       if (!el) return;
+      el.classList.remove('loading');
       if (avatarUrl) {
         el.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="">`;
         el.querySelector('img').onerror = () => { el.textContent = initials(profileName, user.email); };
