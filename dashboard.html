@@ -455,6 +455,13 @@
       transition: opacity .2s, transform .2s;
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.show.with-action { pointer-events: auto; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 20px; white-space: nowrap; }
+    .toast-btn { background: var(--lemon); color: var(--ink); border: 0; border-radius: 999px; padding: 7px 14px; font: 700 14px var(--body); cursor: pointer; }
+    .del-entry { display: flex; align-items: center; gap: 12px; background: var(--soft); border-radius: 14px; padding: 12px 14px; margin: 12px 0 8px; }
+    .del-entry .txt { flex: 1; min-width: 0; }
+    .del-entry b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .del-entry small { color: var(--muted); }
+    .del-entry .amt { font-weight: 700; white-space: nowrap; }
 
     /* ---------- Phones ---------- */
     @media (max-width: 800px) {
@@ -883,12 +890,20 @@
     function getSeen() { try { return JSON.parse(localStorage.getItem('mu_seen_' + user.id)) || []; } catch (e) { return []; } }
     function setSeen(ids) { try { localStorage.setItem('mu_seen_' + user.id, JSON.stringify(ids.slice(-100))); } catch (e) {} }
 
-    function toast(text) {
+    // toast('Saved') or toast('Deleted', { label: 'Undo', fn: () => {...} })
+    function toast(text, action) {
       const t = $('toast');
       t.textContent = text;
+      t.classList.toggle('with-action', !!action);
+      if (action) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'toast-btn'; b.textContent = action.label;
+        b.onclick = () => { t.classList.remove('show'); clearTimeout(t._timer); action.fn(); };
+        t.appendChild(b);
+      }
       t.classList.add('show');
       clearTimeout(t._timer);
-      t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+      t._timer = setTimeout(() => t.classList.remove('show'), action ? 6000 : 2400);
     }
 
     // ================= STATE =================
@@ -1829,14 +1844,48 @@
       refreshAll();
     }
 
-    async function deleteEntry() {
-      if (!editingId || !confirm('Delete this entry? This cannot be undone.')) return;
-      const { error } = await sb.from('transactions').delete().eq('id', editingId);
-      if (error) { $('formMsg').textContent = 'Could not delete. Try again.'; return; }
-      known.delete(editingId);
-      closeForm();
-      toast('Entry deleted');
+    // Ask first, then delete. For 6 seconds after, "Undo" puts it back.
+    function deleteEntry() {
+      if (!editingId) return;
+      const e = known.get(editingId);
+      if (!e) return;
+      openSheet(`
+        <div class="sheet-head"><h2>Delete this entry?</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+        <div class="del-entry">
+          ${iconHtml(e.type, e.category)}
+          <span class="txt"><b>${escapeHtml(e.title)}</b><small>${escapeHtml(e.category)} · ${dayLabel(e.txn_date)}</small></span>
+          <span class="amt">${e.type === 'income' ? '+' : '−'}${naira(e.amount)}</span>
+        </div>
+        <p class="sheet-sub">It will be removed from your totals, Insights and downloads.</p>
+        <p class="form-msg" id="sheetMsg"></p>
+        <div class="stack" style="margin-top:8px">
+          <button type="button" class="btn btn-danger" id="delEntryGo">Delete entry</button>
+          <button type="button" class="btn btn-light" onclick="closeSheet()">Keep it</button>
+        </div>`);
+
+      $('delEntryGo').onclick = async () => {
+        $('delEntryGo').disabled = true;
+        const { error } = await sb.from('transactions').delete().eq('id', e.id);
+        if (error) {
+          $('delEntryGo').disabled = false;
+          $('sheetMsg').textContent = 'Could not delete. Check your internet and try again.';
+          return;
+        }
+        known.delete(e.id);
+        closeSheet();
+        closeForm();
+        refreshAll();
+        toast('Entry deleted', { label: 'Undo', fn: () => restoreEntry(e) });
+      };
+    }
+
+    async function restoreEntry(e) {
+      const { error } = await sb.from('transactions').insert({
+        type: e.type, title: e.title, amount: e.amount, category: e.category, txn_date: e.txn_date
+      });
+      if (error) { toast('Could not restore it. Please add it again.'); return; }
       refreshAll();
+      toast('Entry restored ✓');
     }
 
     // ================= SPONSORED CARD =================
