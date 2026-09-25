@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Log in — MoniUsed</title>
-  <meta name="theme-color" content="#f6c90e">
+  <meta name="theme-color" content="#eee8ff">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <style>
@@ -17,7 +18,7 @@
     .auth-card {
       background: #fff; width: 100%; max-width: 420px;
       border-radius: 16px; padding: 28px 24px;
-      box-shadow: 0 18px 40px rgba(60, 45, 0, .18);
+      box-shadow: 0 18px 40px rgba(38, 20, 67, .16);
     }
     .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 999px; padding: 4px; margin-bottom: 24px; }
     .tabs button {
@@ -32,7 +33,7 @@
       width: 100%; padding: 13px 14px; font-size: 16px; font-family: var(--body);
       border: 1.5px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
     }
-    input:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px rgba(11,93,69,.15); }
+    input:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px rgba(102,51,217,.15); }
     .pw-row { position: relative; }
     .pw-row input { padding-right: 70px; }
     .pw-toggle {
@@ -43,7 +44,7 @@
     .submit:disabled { opacity: .6; cursor: wait; }
     .msg { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; display: none; }
     .msg.error { display: block; background: #fdecea; color: var(--red); }
-    .msg.ok { display: block; background: #e6f4ee; color: var(--green-dark); }
+    .msg.ok { display: block; background: var(--tint); color: var(--green-dark); }
     .small-link { text-align: center; margin-top: 18px; font-size: 15px; }
     .hidden { display: none; }
     .agree { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; font-size: 14.5px; color: var(--muted); cursor: pointer; font-weight: 400; }
@@ -59,13 +60,14 @@
     .link-btn:disabled { color: var(--muted); cursor: default; }
     .row-links { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .forgot-row { text-align: right; margin-top: 8px; }
-    .big-icon { font-size: 40px; margin-bottom: 6px; }
+    .big-icon { width: 56px; height: 56px; border-radius: 16px; background: var(--tint); color: var(--green); display: grid; place-items: center; margin-bottom: 12px; }
+    .big-icon .ico { width: 28px; height: 28px; }
     .legal-links { text-align: center; font-size: 13.5px; color: var(--muted); margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="auth-page">
-    <a href="/" class="logo">Moni<span>Used</span></a>
+    <a href="/" class="logo"><img src="logo-mark.png" class="logo-mark" alt="">Moni<span>Used</span></a>
 
     <div class="auth-card">
       <div class="tabs" role="tablist">
@@ -118,7 +120,7 @@
 
       <!-- ENTER CODE (after sign up) -->
       <div id="verifyBox" class="hidden">
-        <div class="big-icon">📩</div>
+        <div class="big-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
         <h1>Check your email</h1>
         <p class="hint">We sent a 6-digit code to <span class="email-pill" id="verifyEmailShow"></span></p>
 
@@ -135,7 +137,7 @@
 
       <!-- FORGOT PASSWORD: ask for email -->
       <div id="forgotBox" class="hidden">
-        <div class="big-icon">🔑</div>
+        <div class="big-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
         <h1>Reset your password</h1>
         <p class="hint">Enter your email and we'll send you a code to set a new password.</p>
 
@@ -148,7 +150,7 @@
 
       <!-- RESET PASSWORD: code + new password -->
       <div id="resetBox" class="hidden">
-        <div class="big-icon">📩</div>
+        <div class="big-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
         <h1>Set a new password</h1>
         <p class="hint">If <span class="email-pill" id="resetEmailShow"></span> has an account, we sent it a 6-digit code.</p>
 

@@ -46,25 +46,25 @@
 
   const css = `
     #miDialog { border: 0; border-radius: 22px; padding: 22px; width: min(440px, calc(100% - 24px));
-      margin: auto; color: var(--ink, #1b1c18); font-family: var(--body, system-ui, sans-serif); max-height: 92vh; overflow-y: auto; }
-    #miDialog::backdrop { background: rgba(20, 20, 15, .55); }
+      margin: auto; color: var(--ink, #261443); font-family: var(--body, system-ui, sans-serif); max-height: 92vh; overflow-y: auto; }
+    #miDialog::backdrop { background: rgba(38, 20, 67, .5); }
     #miDialog .mi-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
     #miDialog .mi-top img { width: 58px; height: 58px; border-radius: 14px; flex: 0 0 auto; }
     #miDialog h2 { font-family: var(--head, sans-serif); font-size: 22px; line-height: 1.15; margin: 0 0 3px; }
-    #miDialog .mi-sub { color: var(--muted, #5c6057); font-size: 14.5px; margin: 0; }
-    #miDialog .mi-tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft, #f2f3ee); border-radius: 999px; padding: 4px; margin: 4px 0 12px; }
-    #miDialog .mi-tabs button { border: 0; background: none; padding: 9px; border-radius: 999px; font: 700 14px var(--body, sans-serif); color: var(--muted, #5c6057); cursor: pointer; }
-    #miDialog .mi-tabs button.on { background: var(--ink, #1b1c18); color: #fff; }
+    #miDialog .mi-sub { color: var(--muted, #6b6480); font-size: 14.5px; margin: 0; }
+    #miDialog .mi-tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft, #f3f0fb); border-radius: 999px; padding: 4px; margin: 4px 0 12px; }
+    #miDialog .mi-tabs button { border: 0; background: none; padding: 9px; border-radius: 999px; font: 700 14px var(--body, sans-serif); color: var(--muted, #6b6480); cursor: pointer; }
+    #miDialog .mi-tabs button.on { background: var(--ink, #261443); color: #fff; }
     #miDialog ol { list-style: none; margin: 0; padding: 0; }
-    #miDialog li { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--soft, #f2f3ee); }
+    #miDialog li { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--soft, #f3f0fb); }
     #miDialog li:last-child { border-bottom: 0; }
     #miDialog .mi-num { width: 44px; height: 44px; border-radius: 12px; flex: 0 0 auto; display: grid; place-items: center;
-      background: #e6f4ee; color: var(--green, #0b5d45); position: relative; }
+      background: var(--tint, #ece5ff); color: var(--green, #6633d9); position: relative; }
     #miDialog .mi-num svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     #miDialog .mi-num span { position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; border-radius: 50%;
-      background: var(--yellow, #f6c90e); color: var(--ink, #1b1c18); font-size: 12px; font-weight: 800; display: grid; place-items: center; }
-    #miDialog li p { margin: 2px 0 0; color: var(--muted, #5c6057); font-size: 14px; }
-    #miDialog .mi-note { background: var(--soft, #f2f3ee); border-radius: 12px; padding: 10px 12px; font-size: 14px; color: var(--muted, #5c6057); margin: 12px 0 0; }
+      background: var(--lemon, #f4efa8); color: var(--ink, #261443); font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+    #miDialog li p { margin: 2px 0 0; color: var(--muted, #6b6480); font-size: 14px; }
+    #miDialog .mi-note { background: var(--soft, #f3f0fb); border-radius: 12px; padding: 10px 12px; font-size: 14px; color: var(--muted, #6b6480); margin: 12px 0 0; }
     #miDialog .mi-done { text-align: center; padding: 10px 0 4px; font-size: 16px; }
     #miDialog .mi-actions { display: flex; gap: 10px; margin-top: 18px; }
     #miDialog .mi-actions .btn { flex: 1; text-align: center; padding: 13px 10px; }
@@ -135,7 +135,7 @@
 
     if (isInstalled()) {
       d.innerHTML = top + `
-        <p class="mi-done">✅ You're already using the MoniUsed app.</p>
+        <p class="mi-done">You're already using the MoniUsed app.</p>
         <div class="mi-actions"><button type="button" class="btn btn-dark" data-mi="close">Great</button></div>`;
       return;
     }
@@ -148,7 +148,7 @@
         <button type="button" data-dev="android" class="${device === 'android' ? 'on' : ''}" aria-pressed="${device === 'android'}">Android</button>
       </div>
       <ol>${stepsHtml(device)}</ol>
-      ${desktop ? '<p class="mi-note">💻 On a computer? Open <b>moniused.com</b> on your phone and follow these steps. In Chrome or Edge on a computer, you can also click the install icon in the address bar.</p>' : ''}
+      ${desktop ? '<p class="mi-note">On a computer? Open <b>moniused.com</b> on your phone and follow these steps. In Chrome or Edge on a computer, you can also click the install icon in the address bar.</p>' : ''}
       <div class="mi-actions">
         <button type="button" class="btn btn-light" data-mi="later">Maybe later</button>
         <button type="button" class="btn btn-dark" data-mi="close">Got it</button>

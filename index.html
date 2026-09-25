@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MoniUsed — See where your moni went</title>
   <meta name="description" content="MoniUsed is a free expense tracker for Nigerians. Record your income and spending in Naira and see where your money goes every month.">
-  <meta name="theme-color" content="#f6c90e">
+  <meta name="theme-color" content="#eee8ff">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <style>
@@ -26,7 +27,7 @@
 
   <header class="site-header">
     <div class="wrap">
-      <a href="/" class="logo">Moni<span>Used</span></a>
+      <a href="/" class="logo"><img src="logo-mark.png" class="logo-mark" alt="">Moni<span>Used</span></a>
       <nav class="nav">
         <a href="#plans" class="link">Plans</a>
         <a href="auth.html" class="link">Log in</a>
@@ -48,7 +49,7 @@
             <a href="auth.html" class="btn btn-light">Log in</a>
           </div>
           <p class="note">Free to use. No card needed.</p>
-          <button type="button" class="app-link" onclick="MoniInstall.show()">📲 Get the app on your phone</button>
+          <button type="button" class="app-link" onclick="MoniInstall.show()"><svg class="ico ico-inline" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg> Get the app on your phone</button>
         </div>
 
         <div class="receipt" aria-label="Example of a week in MoniUsed">
