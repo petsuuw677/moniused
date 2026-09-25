@@ -2009,13 +2009,15 @@
           </div>
         </div>`;
 
-      // Count a view once per advert per day on this device
+      // Count a view once per advert per day on this device.
+      // (.then() is needed: the request is only sent when we wait for its answer.)
+      const countAd = (kind) => sb.rpc('ad_event', { ad_id: ad.id, kind })
+        .then(({ error }) => !error, () => false);
       const seenKey = 'mu_ad_seen_' + ad.id;
       if (localStorage.getItem(seenKey) !== day) {
-        localStorage.setItem(seenKey, day);
-        sb.rpc('ad_event', { ad_id: ad.id, kind: 'view' });
+        countAd('view').then(ok => { if (ok) localStorage.setItem(seenKey, day); });
       }
-      $('adLink').onclick = () => { sb.rpc('ad_event', { ad_id: ad.id, kind: 'click' }); };
+      $('adLink').onclick = () => { countAd('click'); };
     }
 
     // ================= APP LOCK (PIN) =================
