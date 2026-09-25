@@ -313,6 +313,7 @@
 
     .form-actions { display: flex; gap: 10px; margin-top: 20px; }
     .form-actions .btn { flex: 1; padding: 13px 10px; white-space: nowrap; }
+    .added-at { color: var(--muted); font-size: 13.5px; margin: -6px 0 8px; }
     .btn-delete { background: none; border: 0; color: var(--red); font-weight: 700; margin-top: 12px; cursor: pointer; font-size: 15px; width: 100%; padding: 8px; }
     .form-msg { color: var(--red); font-size: 14px; margin-top: 10px; min-height: 1em; }
 
@@ -745,6 +746,7 @@
   <!-- ================= ADD / EDIT FORM ================= -->
   <dialog id="entryDialog">
     <h2 id="formTitle">Add expense</h2>
+    <p class="added-at" id="addedAt" hidden></p>
 
     <div class="type-toggle" id="typeToggle">
       <input type="radio" name="type" id="typeExpense" value="expense" checked>
@@ -846,6 +848,12 @@
     function iconHtml(type, name) {
       const c = catInfo(type, name);
       return `<span class="cat-icon" style="background:${c.color}26;color:${c.color}" aria-hidden="true">${c.icon}</span>`;
+    }
+
+    // "2:45 PM" from the time an entry was saved
+    function timeOf(ts) {
+      if (!ts) return '';
+      return new Date(ts).toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit', hour12: true }).toUpperCase();
     }
 
     function thisMonth() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
@@ -1006,7 +1014,7 @@
     function fetchMonth(value) {
       const { start, end } = monthRange(value);
       return sb.from('transactions')
-        .select('id, type, title, amount, category, txn_date')
+        .select('id, type, title, amount, category, txn_date, created_at')
         .gte('txn_date', start).lt('txn_date', end)
         .order('txn_date', { ascending: false })
         .order('created_at', { ascending: false });
@@ -1018,7 +1026,7 @@
         fetchMonth(month),
         fetchMonth(prevMonth(month)),
         sb.from('transactions')
-          .select('id, type, title, amount, category, txn_date')
+          .select('id, type, title, amount, category, txn_date, created_at')
           .order('txn_date', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(40)
@@ -1372,7 +1380,7 @@
     async function fetchEntriesFor(period) {
       let all = [];
       for (let from = 0; ; from += 1000) {
-        let q = sb.from('transactions').select('txn_date, type, title, category, amount')
+        let q = sb.from('transactions').select('txn_date, created_at, type, title, category, amount')
           .order('txn_date', { ascending: true }).order('created_at', { ascending: true }).range(from, from + 999);
         if (period === 'month') {
           const [y, m] = thisMonth().split('-').map(Number);
@@ -1405,38 +1413,106 @@
       setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     }
 
+    // Logo as a data link, for PDF and Excel files
+    async function logoData(white) {
+      const res = await fetch(white ? '/logo-mark-white.png' : '/logo-mark.png');
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+    }
+    const createdOn = () => new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+    const fileName = (period, ext, word) => `moniused-${word ? word + '-' : ''}${period === 'all' ? 'all' : thisMonth()}-${fileDate()}.${ext}`;
+
     async function makeCsv(rows, period) {
       const q = (v) => '"' + String(v).replace(/"/g, '""') + '"';
-      const lines = [['Date', 'Type', 'Title', 'Category', 'Amount (NGN)'].join(',')]
-        .concat(rows.map(e => [e.txn_date, e.type, q(e.title), q(e.category), e.amount].join(',')));
-      saveBlob(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }),
-        `moniused-${period === 'all' ? 'all' : thisMonth()}-${fileDate()}.csv`);
+      const lines = [
+        q('MoniUsed statement - ' + periodLabel(period)),
+        q((profileName || '') + ' <' + user.email + '>'),
+        q('moniused.com | ' + CONTACT_EMAIL),
+        '',
+        ['Date', 'Time added', 'Type', 'Title', 'Category', 'Amount (NGN)'].join(',')
+      ].concat(rows.map(e => [e.txn_date, timeOf(e.created_at), e.type, q(e.title), q(e.category), e.amount].join(',')));
+      saveBlob(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }), fileName(period, 'csv'));
     }
 
     async function makeExcel(rows, period) {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
       const t = totalsOf(rows);
-      const wb = XLSX.utils.book_new();
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'MoniUsed';
+      const logo = wb.addImage({ base64: await logoData(false), extension: 'png' });
+      const VIOLET = 'FF6633D9', INK = 'FF261443', MUTED = 'FF6B6480', SOFT = 'FFF3F0FB';
+      const MONEY = '#,##0.00;[Red]-#,##0.00';
 
-      const entries = [['Date', 'Type', 'Title', 'Category', 'Amount (NGN)']]
-        .concat(rows.map(r => [r.txn_date, r.type === 'income' ? 'Money in' : 'Money out', r.title, r.category,
-          r.type === 'income' ? Number(r.amount) : -Number(r.amount)]));
-      const ws1 = XLSX.utils.aoa_to_sheet(entries);
-      ws1['!cols'] = [{ wch: 12 }, { wch: 11 }, { wch: 32 }, { wch: 16 }, { wch: 16 }];
-      XLSX.utils.book_append_sheet(wb, ws1, 'Entries');
+      function top(ws, title) {
+        ws.addImage(logo, { tl: { col: 0.2, row: 0.2 }, ext: { width: 56, height: 56 } });
+        [1, 2, 3, 4].forEach(r => { ws.getRow(r).height = 19; });
+        const c1 = ws.getCell('B1'); c1.value = 'MoniUsed · ' + title; c1.font = { bold: true, size: 15, color: { argb: VIOLET } };
+        const c2 = ws.getCell('B2'); c2.value = (profileName ? profileName + ' · ' : '') + user.email; c2.font = { bold: true, color: { argb: INK } };
+        const c3 = ws.getCell('B3'); c3.value = 'Period: ' + periodLabel(period) + '   ·   Created: ' + createdOn(); c3.font = { color: { argb: MUTED } };
+        const c4 = ws.getCell('B4'); c4.value = 'moniused.com   ·   ' + CONTACT_EMAIL; c4.font = { color: { argb: MUTED } };
+      }
+      function headRow(ws, rowNo, values) {
+        const row = ws.getRow(rowNo);
+        row.values = values;
+        row.eachCell(c => {
+          c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: VIOLET } };
+          c.alignment = { vertical: 'middle' };
+        });
+        row.height = 20;
+      }
 
+      // Sheet 1: every entry
+      const ws = wb.addWorksheet('Entries');
+      [13, 12, 11, 34, 20, 17].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+      top(ws, 'Statement of entries');
+      headRow(ws, 6, ['Date', 'Time added', 'Type', 'Title', 'Category', 'Amount (NGN)']);
+      rows.forEach((r, i) => {
+        const [y, m, d] = r.txn_date.split('-').map(Number);
+        const row = ws.getRow(7 + i);
+        row.values = [new Date(Date.UTC(y, m - 1, d)), timeOf(r.created_at), r.type === 'income' ? 'Money in' : 'Money out',
+          r.title, r.category, r.type === 'income' ? Number(r.amount) : -Number(r.amount)];
+        row.getCell(1).numFmt = 'dd mmm yyyy';
+        row.getCell(6).numFmt = MONEY;
+        if (i % 2) row.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SOFT } }; });
+      });
+      let r0 = 7 + rows.length + 1;
+      [['Money in', t.inc], ['Money out', -t.out], ['Balance', t.bal]].forEach(([label, val], i) => {
+        const row = ws.getRow(r0 + i);
+        row.getCell(5).value = label; row.getCell(5).font = { bold: true, color: { argb: INK } };
+        row.getCell(6).value = val; row.getCell(6).numFmt = MONEY; row.getCell(6).font = { bold: true };
+      });
+      ws.views = [{ state: 'frozen', ySplit: 6 }];
+      ws.autoFilter = 'A6:F6';
+
+      // Sheet 2: summary
+      const ss = wb.addWorksheet('Summary');
+      ss.getColumn(1).width = 13; ss.getColumn(2).width = 26; ss.getColumn(3).width = 18;
+      top(ss, 'Summary');
+      [['Money in', t.inc], ['Money out', t.out], ['Balance', t.bal], ['Number of entries', rows.length]].forEach(([label, val], i) => {
+        const row = ss.getRow(6 + i);
+        row.getCell(2).value = label; row.getCell(2).font = { bold: true, color: { argb: INK } };
+        row.getCell(3).value = val; if (i < 3) row.getCell(3).numFmt = MONEY;
+      });
       const byCat = {};
       rows.filter(r => r.type === 'expense').forEach(r => { byCat[r.category] = (byCat[r.category] || 0) + Number(r.amount); });
-      const summary = [
-        ['MoniUsed summary'], ['Name', profileName || ''], ['Period', periodLabel(period)], [],
-        ['Money in (NGN)', t.inc], ['Money out (NGN)', t.out], ['Balance (NGN)', t.bal], ['Number of entries', rows.length], [],
-        ['Spending by category', 'Amount (NGN)']
-      ].concat(Object.entries(byCat).sort((a, b) => b[1] - a[1]));
-      const ws2 = XLSX.utils.aoa_to_sheet(summary);
-      ws2['!cols'] = [{ wch: 24 }, { wch: 18 }];
-      XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+      const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+      headRow(ss, 11, [null, 'Spending by category', 'Amount (NGN)', 'Share']);
+      cats.forEach(([name, amt], i) => {
+        const row = ss.getRow(12 + i);
+        row.getCell(2).value = name;
+        row.getCell(3).value = amt; row.getCell(3).numFmt = MONEY;
+        row.getCell(4).value = t.out ? amt / t.out : 0; row.getCell(4).numFmt = '0%';
+      });
+      ss.getColumn(4).width = 10;
 
-      XLSX.writeFile(wb, `moniused-${period === 'all' ? 'all' : thisMonth()}-${fileDate()}.xlsx`);
+      const buf = await wb.xlsx.writeBuffer();
+      saveBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName(period, 'xlsx'));
     }
 
     async function makePdf(rows, period) {
@@ -1445,54 +1521,59 @@
       const plain = (v) => String(v == null ? '' : v).replace(/[^\x20-\x7E\xA0-\xFF]/g, '').trim();   // PDF fonts can't show emoji
       const money = (n) => 'NGN ' + Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const t = totalsOf(rows);
+      let logo = null;
+      try { logo = await logoData(true); } catch (e) { /* PDF still works without the logo */ }
 
       const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
       const W = doc.internal.pageSize.getWidth();
-      doc.setFillColor(102, 51, 217); doc.rect(0, 0, W, 70, 'F');
+      doc.setFillColor(102, 51, 217); doc.rect(0, 0, W, 76, 'F');
+      if (logo) doc.addImage(logo, 'PNG', 40, 20, 36, 36);
       doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
-      doc.text('MoniUsed', 40, 44);
+      doc.text('MoniUsed', logo ? 86 : 40, 46);
       doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-      doc.text('Statement of entries', W - 40, 44, { align: 'right' });
+      doc.text('Statement of entries', W - 40, 40, { align: 'right' });
+      doc.setFontSize(9);
+      doc.text('moniused.com  |  ' + CONTACT_EMAIL, W - 40, 55, { align: 'right' });
 
-      doc.setTextColor(38, 20, 67); doc.setFontSize(11);
-      doc.text(plain(profileName) || plain(user.email), 40, 100);
-      doc.setTextColor(107, 100, 128);
-      doc.text(plain(user.email), 40, 116);
-      doc.text('Period: ' + periodLabel(period), W - 40, 100, { align: 'right' });
-      doc.text('Created: ' + new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }), W - 40, 116, { align: 'right' });
+      doc.setTextColor(38, 20, 67); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text(plain(profileName) || plain(user.email), 40, 106);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(107, 100, 128);
+      doc.text(plain(user.email), 40, 122);
+      doc.text('Period: ' + periodLabel(period), W - 40, 106, { align: 'right' });
+      doc.text('Created: ' + createdOn(), W - 40, 122, { align: 'right' });
 
       const boxes = [['Money in', t.inc], ['Money out', t.out], ['Balance', t.bal]];
       const bw = (W - 80 - 20) / 3;
       boxes.forEach(([label, val], i) => {
         const x = 40 + i * (bw + 10);
-        doc.setFillColor(243, 240, 251); doc.roundedRect(x, 136, bw, 52, 6, 6, 'F');
-        doc.setTextColor(107, 100, 128); doc.setFontSize(9); doc.text(label, x + 10, 154);
-        doc.setTextColor(38, 20, 67); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(money(val), x + 10, 174);
+        doc.setFillColor(243, 240, 251); doc.roundedRect(x, 140, bw, 52, 6, 6, 'F');
+        doc.setTextColor(107, 100, 128); doc.setFontSize(9); doc.text(label, x + 10, 158);
+        doc.setTextColor(38, 20, 67); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(money(val), x + 10, 178);
         doc.setFont('helvetica', 'normal');
       });
 
       doc.autoTable({
-        startY: 206,
-        head: [['Date', 'Title', 'Category', 'Amount']],
-        body: rows.map(r => [r.txn_date, plain(r.title), plain(r.category),
+        startY: 210,
+        head: [['Date', 'Time', 'Title', 'Category', 'Amount']],
+        body: rows.map(r => [r.txn_date, timeOf(r.created_at), plain(r.title), plain(r.category),
           (r.type === 'income' ? '+ ' : '- ') + money(r.amount)]),
         styles: { fontSize: 9.5, cellPadding: 6, textColor: [38, 20, 67] },
         headStyles: { fillColor: [102, 51, 217], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [248, 246, 255] },
-        columnStyles: { 0: { cellWidth: 70 }, 3: { halign: 'right', cellWidth: 110 } },
+        columnStyles: { 0: { cellWidth: 66 }, 1: { cellWidth: 56 }, 4: { halign: 'right', cellWidth: 104 } },
         didParseCell: (d) => {
-          if (d.section === 'body' && d.column.index === 3) d.cell.styles.textColor = rows[d.row.index].type === 'income' ? [102, 51, 217] : [38, 20, 67];
+          if (d.section === 'body' && d.column.index === 4) d.cell.styles.textColor = rows[d.row.index].type === 'income' ? [102, 51, 217] : [38, 20, 67];
         },
         margin: { left: 40, right: 40, bottom: 50 },
         didDrawPage: () => {
           const H = doc.internal.pageSize.getHeight();
-          doc.setFontSize(8.5); doc.setTextColor(140, 140, 130);
-          doc.text('MoniUsed - moniused.com', 40, H - 24);
+          doc.setFontSize(8.5); doc.setTextColor(140, 130, 160);
+          doc.text('MoniUsed  |  moniused.com  |  ' + CONTACT_EMAIL, 40, H - 24);
           doc.text('Page ' + doc.internal.getNumberOfPages(), W - 40, H - 24, { align: 'right' });
         }
       });
 
-      doc.save(`moniused-statement-${period === 'all' ? 'all' : thisMonth()}-${fileDate()}.pdf`);
+      doc.save(fileName(period, 'pdf', 'statement'));
     }
 
     $('exportBtn').onclick = () => {
@@ -1620,7 +1701,7 @@
         <li>
           <button type="button" class="entry-row" onclick="openForm('${e.id}')">
             ${iconHtml(e.type, e.category)}
-            <span class="txt"><b>${escapeHtml(e.title)}</b><small>${escapeHtml(e.category)}${hideDate ? '' : ' · ' + dayLabel(e.txn_date)}</small></span>
+            <span class="txt"><b>${escapeHtml(e.title)}</b><small>${escapeHtml(e.category)}${hideDate ? '' : ' · ' + dayLabel(e.txn_date)}${e.created_at ? ' · ' + timeOf(e.created_at) : ''}</small></span>
             <span class="amt ${e.type === 'income' ? 'in' : ''}">${e.type === 'income' ? '+' : '−'}${naira(e.amount)}</span>
           </button>
         </li>`;
@@ -1786,6 +1867,11 @@
       $('fAmount').value = src ? Number(src.amount).toLocaleString('en-NG') : '';
       $('fDate').value = entry ? entry.txn_date : today();
       $('deleteBtn').classList.toggle('hidden', !entry);
+      $('addedAt').hidden = !(entry && entry.created_at);
+      if (entry && entry.created_at) {
+        $('addedAt').textContent = 'Added ' + new Date(entry.created_at).toLocaleDateString('en-NG',
+          { day: 'numeric', month: 'short', year: 'numeric' }) + ' at ' + timeOf(entry.created_at);
+      }
       $('formMsg').textContent = '';
       $('saveBtn').disabled = false;
       setFormType(type, !!entry);
