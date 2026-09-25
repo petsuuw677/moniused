@@ -639,7 +639,7 @@
       </button>
     </div>
 
-    <p class="version">MoniUsed v1.5</p>
+    <p class="version">MoniUsed v1.6</p>
   </main>
 
   <!-- ================= PLANS ================= -->
@@ -1468,6 +1468,17 @@
           <li>your profile photo and suggestions</li>
         </ul>
         <p class="sheet-sub" style="margin-top:10px"><b>This can't be undone.</b> Want a copy first? <button type="button" class="link-inline" id="exportFirst" style="background:none;border:0;color:var(--green);font:inherit;font-weight:700;cursor:pointer;padding:0">Download my entries</button></p>
+        <label for="delReason">Why are you leaving? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <select id="delReason">
+          <option value="">Choose a reason</option>
+          <option>I don't use it anymore</option>
+          <option>It's missing features I need</option>
+          <option>It's hard to use</option>
+          <option>I'm worried about privacy</option>
+          <option>I'm using another app</option>
+          <option>I'll create a new account</option>
+          <option>Other</option>
+        </select>
         <label for="delPassword">Your password</label>
         <input type="password" id="delPassword" autocomplete="current-password" placeholder="Enter your password">
         <label for="delConfirm">Type DELETE to confirm</label>
@@ -1492,7 +1503,7 @@
 
         // 2. Remove photo, then the account (entries and suggestions go with it)
         await sb.storage.from('avatars').remove([`${user.id}/avatar.jpg`]).catch(() => {});
-        const { error } = await sb.rpc('delete_my_account');
+        const { error } = await sb.rpc('delete_my_account', { reason: $('delReason').value || null });
         if (error) { btn.disabled = false; btn.textContent = 'Delete my account forever'; return msg.textContent = 'Could not delete your account. Try again or contact us.'; }
 
         // 3. Clean up this device and leave

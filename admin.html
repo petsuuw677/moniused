@@ -144,6 +144,31 @@
       </div>
       <p class="note">"Active" means the user added an entry in that period. Admins can't see anyone's amounts or entry details. Changing a plan here gives that user the plan for free (for testers and early supporters).</p>
     </section>
+
+    <section class="panel" id="delPanel">
+      <div class="panel-top">
+        <h2>Deleted accounts <span class="count-badge" id="delCount" hidden style="background:var(--muted)"></span></h2>
+        <input type="search" id="delSearch" placeholder="Search name or email" aria-label="Search deleted accounts">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Joined</th>
+              <th>Deleted</th>
+              <th>Entries</th>
+              <th>Last entry</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="delRows"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note">Saved automatically when a user deletes their account. Their entries are not kept. Records are removed after 12 months.</p>
+    </section>
   </main>
   <div class="flash" id="flash" role="status"></div>
 
@@ -173,7 +198,46 @@
       loadStats();
       loadFeedback();
       loadUsers();
+      loadDeleted();
     }
+
+    // ---------- Deleted accounts ----------
+    let deleted = [];
+    async function loadDeleted() {
+      const { data, error } = await sb.from('deleted_accounts')
+        .select('email, full_name, plan, joined_at, deleted_at, entries_count, last_entry_at, reason')
+        .order('deleted_at', { ascending: false }).limit(1000);
+      if (error) {
+        $('delRows').innerHTML = '<tr><td colspan="8" class="empty">Could not load deleted accounts. Refresh to try again.</td></tr>';
+        return;
+      }
+      deleted = data;
+      $('delCount').hidden = deleted.length === 0;
+      $('delCount').textContent = deleted.length;
+      renderDeleted();
+    }
+
+    function renderDeleted() {
+      const q = $('delSearch').value.trim().toLowerCase();
+      const list = deleted.filter(d =>
+        !q || (d.email || '').toLowerCase().includes(q) || (d.full_name || '').toLowerCase().includes(q));
+      if (list.length === 0) {
+        $('delRows').innerHTML = `<tr><td colspan="8" class="empty">${q ? 'No deleted accounts match your search.' : 'No deleted accounts yet.'}</td></tr>`;
+        return;
+      }
+      $('delRows').innerHTML = list.map(d => `
+        <tr>
+          <td>${escapeHtml(d.full_name) || '<span class="muted">No name</span>'}</td>
+          <td>${escapeHtml(d.email)}</td>
+          <td>${escapeHtml(d.plan || 'starter')}</td>
+          <td>${niceDate(d.joined_at)}</td>
+          <td>${niceDate(d.deleted_at)}</td>
+          <td class="num">${num(d.entries_count)}</td>
+          <td>${niceDate(d.last_entry_at)}</td>
+          <td>${escapeHtml(d.reason) || '<span class="muted">—</span>'}</td>
+        </tr>`).join('');
+    }
+    $('delSearch').oninput = renderDeleted;
 
     // ---------- Suggestions ----------
     let feedback = [];
