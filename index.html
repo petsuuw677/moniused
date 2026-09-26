@@ -3,8 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MoniUsed — See where your moni went</title>
+  <title>MoniUsed – Free Expense Tracker for Nigerians | Track Your Naira Spending</title>
   <meta name="description" content="MoniUsed is a free expense tracker for Nigerians. Record your income and spending in Naira and see where your money goes every month.">
+  <link rel="canonical" href="https://www.moniused.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MoniUsed">
+  <meta property="og:title" content="MoniUsed – See where your moni went">
+  <meta property="og:description" content="Free expense tracker for Nigerians. Track your income and spending in Naira and see where your money goes.">
+  <meta property="og:url" content="https://www.moniused.com/">
+  <meta property="og:image" content="https://www.moniused.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MoniUsed – See where your moni went">
+  <meta name="twitter:description" content="Free expense tracker for Nigerians. Track your income and spending in Naira and see where your money goes.">
+  <meta name="twitter:image" content="https://www.moniused.com/og-image.png">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"MoniUsed","url":"https://www.moniused.com/",
+   "applicationCategory":"FinanceApplication","operatingSystem":"Web, iOS, Android",
+   "description":"Free expense tracker for Nigerians. Record income and spending in Naira and see where your money goes.",
+   "offers":{"@type":"Offer","price":"0","priceCurrency":"NGN"}}
+  </script>
   <meta name="theme-color" content="#eee8ff">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
@@ -20,6 +39,14 @@
       font-family: var(--body); font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer;
     }
     .app-link:hover { background: rgba(255,255,255,.85); }
+    .hero-phones { position: relative; width: 100%; max-width: 420px; justify-self: center; aspect-ratio: 420 / 520; }
+    .hero-phones .ph {
+      position: absolute; width: 53%; aspect-ratio: 540 / 1090; border-radius: 30px; background: #1a1026; padding: 6px;
+      box-shadow: 0 26px 50px rgba(38, 20, 67, .28);
+    }
+    .hero-phones img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 24px; display: block; }
+    .hero-phones .one { left: 0; top: 0; transform: rotate(-4deg); z-index: 2; }
+    .hero-phones .two { right: 0; top: 11%; transform: rotate(4deg); }
     @media (max-width: 480px) { .nav .get-app { display: none; } }
   </style>
 </head>
@@ -52,22 +79,9 @@
           <button type="button" class="app-link" onclick="MoniInstall.show()"><svg class="ico ico-inline" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg> Get the app on your phone</button>
         </div>
 
-        <div class="receipt" aria-label="Example of a week in MoniUsed">
-          <h3>This week</h3>
-          <p class="sub">Example entries</p>
-          <ul>
-            <li><span>Salary<small>Income · Mon</small></span><span class="amt in">+₦250,000</span></li>
-            <li><span>Rent contribution<small>Housing · Mon</small></span><span class="amt out">−₦80,000</span></li>
-            <li><span>Market shopping<small>Food · Tue</small></span><span class="amt out">−₦21,000</span></li>
-            <li><span>Bolt rides<small>Transport · Wed</small></span><span class="amt out">−₦12,500</span></li>
-            <li><span>MTN data<small>Data &amp; airtime · Thu</small></span><span class="amt out">−₦5,000</span></li>
-            <li><span>Suya with the guys<small>Outings · Fri</small></span><span class="amt out">−₦4,000</span></li>
-          </ul>
-          <div class="totals">
-            <div>In<strong>₦250,000</strong></div>
-            <div>Out<strong>₦122,500</strong></div>
-            <div class="left">Left<strong>₦127,500</strong></div>
-          </div>
+        <div class="hero-phones" aria-label="MoniUsed app screens">
+          <div class="ph one"><img src="hero-home.jpg" alt="MoniUsed home screen showing money left this month, money in and money out" width="540" height="1105"></div>
+          <div class="ph two"><img src="hero-entries.jpg" alt="MoniUsed entries screen listing expenses and income by day" width="540" height="1068" loading="lazy"></div>
         </div>
       </div>
     </section>
