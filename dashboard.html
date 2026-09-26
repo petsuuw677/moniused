@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MoniUsed</title>
+  <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#eee8ff">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
@@ -12,6 +13,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <script>try { if (localStorage.getItem('mu_pin')) document.documentElement.classList.add('locked'); } catch (e) {}</script>
+  <script>try { if (localStorage.getItem('mu_theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}</script>
   <style>
     html { background: var(--yellow); }
     body { background: var(--soft); min-height: 100vh; padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
@@ -29,6 +31,8 @@
       background: rgba(255,255,255,.5); color: var(--ink); display: grid; place-items: center;
     }
     .icon-btn:hover { background: rgba(255,255,255,.75); }
+    .theme-btn .sun { display: none; }
+    .donut-track { stroke: #f2f3ee; }
     .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .badge {
       position: absolute; top: 2px; right: 0; min-width: 19px; height: 19px; padding: 0 5px;
@@ -118,6 +122,7 @@
     .balance-card .label { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.82); }
     .balance-card .carried { font-size: 13px; color: rgba(255,255,255,.85); margin: -10px 0 14px; }
     body.expense-only .income-only { display: none !important; }
+    body:not(.import-on) .import-only { display: none !important; }
     .welcome-sub { color: var(--muted); font-size: 15.5px; margin: 2px 0 16px; }
     .choice {
       display: flex; gap: 14px; align-items: center; width: 100%; text-align: left; background: #fff;
@@ -460,6 +465,33 @@
     }
     .ad-x:hover { background: var(--soft); }
 
+    /* ---------- Statement import ---------- */
+    .imp-drop { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; border: 2px dashed var(--line);
+      border-radius: 16px; padding: 22px 16px; margin: 12px 0; cursor: pointer; color: var(--muted); }
+    .imp-drop:hover { border-color: var(--green); }
+    .imp-drop .ico { width: 34px; height: 34px; color: var(--green); }
+    .imp-drop b { color: var(--ink); font-size: 16px; }
+    .imp-points { font-size: 14px; color: var(--muted); padding-left: 18px; margin: 4px 0 8px; }
+    .imp-points li { margin: 4px 0; }
+    .imp-progress { text-align: center; padding: 26px 8px; }
+    .imp-progress .spin { width: 40px; height: 40px; border-radius: 50%; border: 4px solid var(--tint); border-top-color: var(--green); margin: 0 auto 14px; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .imp-summary { background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: 14px; margin: 8px 0 10px; }
+    .imp-tools { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 6px; }
+    .imp-tools button { background: none; border: 0; color: var(--green); font: 700 14px var(--body); cursor: pointer; padding: 4px 0; }
+    .imp-list { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; border-top: 1px solid var(--line); }
+    .imp-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+    .imp-row.off { opacity: .45; }
+    .imp-row input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--green); margin: 0; }
+    .imp-row .t { min-width: 0; }
+    .imp-row .t b { display: block; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .imp-row .t small { color: var(--muted); font-size: 12.5px; }
+    .imp-row select { font: 12.5px var(--body); padding: 3px 6px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); max-width: 150px; margin-top: 3px; width: auto; }
+    .imp-row .a { font-weight: 700; font-size: 14px; white-space: nowrap; }
+    .imp-row .a.in { color: var(--green); }
+    .imp-dup { display: inline-block; font-size: 11px; font-weight: 700; color: #9a6a00; background: #d9a4001f; border-radius: 6px; padding: 1px 6px; margin-left: 4px; }
+    .imp-foot { position: sticky; bottom: 0; background: #fff; padding-top: 12px; }
+
     /* ---------- Icons ---------- */
     .cat-icon .ico { width: 56%; height: 56%; }
     .set-icon .ico { width: 18px; height: 18px; }
@@ -475,6 +507,70 @@
     .streak-flame { color: #ef6c5a; width: 20px; height: 20px; display: inline-block; vertical-align: -3px; }
     .lock-logo { display: flex; align-items: center; }
     .lock-logo img { width: 30px; height: 30px; margin-right: 8px; }
+
+
+    /* ================= DARK MODE ================= */
+    html[data-theme="dark"] {
+      --ink: #eee9f8; --muted: #a9a0bf; --paper: #14101f; --soft: #14101f; --line: #342c4a;
+      --green: #9774f3; --green-dark: #b59ef7; --yellow: #1c1630; --lemon: #e7e09a; --tint: #2d2446; --red: #ff7a70;
+      --card: #1f1a30;
+      color-scheme: dark;
+    }
+    html[data-theme="dark"] .avatar-edit .cam,
+    html[data-theme="dark"] input, html[data-theme="dark"] select,
+    html[data-theme="dark"] .panel,
+    html[data-theme="dark"] .btn-income,
+    html[data-theme="dark"] .choice,
+    html[data-theme="dark"] .choice .tick,
+    html[data-theme="dark"] .chip,
+    html[data-theme="dark"] .stat,
+    html[data-theme="dark"] .profile-card,
+    html[data-theme="dark"] .mini-stats div,
+    html[data-theme="dark"] .settings,
+    html[data-theme="dark"] .billing-toggle,
+    html[data-theme="dark"] .plan-card,
+    html[data-theme="dark"] .plan-btn.current,
+    html[data-theme="dark"] .cat-tile,
+    html[data-theme="dark"] .kind-chips button,
+    html[data-theme="dark"] .fmt-btn,
+    html[data-theme="dark"] .ad-card,
+    html[data-theme="dark"] .imp-row select,
+    html[data-theme="dark"] .imp-foot { background: var(--card); }
+    html[data-theme="dark"] .choice.selected .tick { background: var(--green); border-color: var(--green); }
+    html[data-theme="dark"] dialog { background: var(--card); color: var(--ink); }
+    html[data-theme="dark"] dialog::backdrop { background: rgba(0, 0, 0, .65); }
+    html[data-theme="dark"] .icon-btn { background: rgba(255,255,255,.08); }
+    html[data-theme="dark"] .icon-btn:hover { background: rgba(255,255,255,.14); }
+    html[data-theme="dark"] .tabbar { background: rgba(31, 26, 48, .72); border-color: rgba(255,255,255,.08); box-shadow: 0 10px 34px rgba(0,0,0,.45); }
+    html[data-theme="dark"] .tabbar a { color: #b3aac8; }
+    html[data-theme="dark"] .tabbar a.active { color: var(--green); background: rgba(255,255,255,.09); box-shadow: none; }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { html[data-theme="dark"] .tabbar { background: rgba(31,26,48,.97); } }
+    html[data-theme="dark"] .balance-card { background: #5b2fd0; }
+    html[data-theme="dark"] .btn-dark, html[data-theme="dark"] .ad-cta, html[data-theme="dark"] .toast { background: #efeaff; color: #1a1030; border-color: #efeaff; }
+    html[data-theme="dark"] .btn-dark:hover { background: #ffffff; border-color: #ffffff; }
+    html[data-theme="dark"] .btn-light:hover { background: rgba(255,255,255,.08); }
+    html[data-theme="dark"] .btn-income { color: var(--green); border-color: var(--green); }
+    html[data-theme="dark"] .btn-income:hover { background: var(--tint); }
+    html[data-theme="dark"] .billing-toggle button.on, html[data-theme="dark"] .type-toggle input:checked + label, html[data-theme="dark"] .kind-chips button.on, html[data-theme="dark"] .seg button.on { background: #efeaff; color: #1a1030; border-color: #efeaff; }
+    html[data-theme="dark"] .plan-card.dark { background: #2b2146; border-color: #3d3060; color: #fff; }
+    html[data-theme="dark"] .set-row:hover { background: rgba(255,255,255,.04); }
+    html[data-theme="dark"] .logout:hover { background: rgba(255,122,112,.12); }
+    html[data-theme="dark"] .warn-list { background: rgba(255,122,112,.1); color: #ffb4ab; }
+    html[data-theme="dark"] .skel { background: linear-gradient(90deg, #262036 0%, #322a47 50%, #262036 100%); background-size: 200% 100%; }
+    html[data-theme="dark"] .avatar.loading { background: linear-gradient(90deg, #262036 0%, #322a47 50%, #262036 100%); background-size: 200% 100%; }
+    html[data-theme="dark"] #lockDialog .pin-keys button { background: rgba(255,255,255,.08); }
+    html[data-theme="dark"] .pin-keys button { background: var(--soft); }
+    html[data-theme="dark"] .pin-keys button:active { background: var(--line); }
+    html[data-theme="dark"] .switch { background: #4a4163; }
+    html[data-theme="dark"] .switch.on { background: var(--green); }
+    html[data-theme="dark"] .choice:hover { border-color: #5a4a86; }
+    html[data-theme="dark"] .imp-foot { background: var(--card); }
+    html[data-theme="dark"] .choice.selected .tick { background: var(--green); border-color: var(--green); }
+    html[data-theme="dark"] #miDialog { background: var(--card); color: var(--ink); }
+    html[data-theme="dark"] #miDialog .mi-tabs button.on { background: #efeaff; color: #1a1030; }
+    html[data-theme="dark"] .donut-track { stroke: #2b2440; }
+    html[data-theme="dark"] .theme-btn .sun { display: block; }
+    html[data-theme="dark"] .theme-btn .moon { display: none; }
 
     /* ---------- Saved message ---------- */
     .toast {
@@ -529,6 +625,10 @@
         <button type="button" class="icon-btn" id="bellBtn" aria-label="Notifications">
           <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           <span class="badge hidden" id="bellBadge"></span>
+        </button>
+        <button type="button" class="icon-btn theme-btn" id="themeBtn" aria-label="Switch to dark mode">
+          <svg class="moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         </button>
         <a href="#profile" class="avatar loading" id="headAvatar" aria-label="Profile"></a>
       </div>
@@ -595,6 +695,7 @@
       <div class="controls">
         <button type="button" class="btn btn-dark" onclick="openForm(null, 'expense')">+ Expense</button>
         <button type="button" class="btn btn-income income-only" onclick="openForm(null, 'income')">+ Income</button>
+        <button type="button" class="btn btn-light import-only" onclick="openImport()">Import statement</button>
       </div>
     </div>
     <div class="controls" style="margin-bottom:12px">
@@ -713,6 +814,9 @@
 
     <p class="group-label">Your data</p>
     <div class="settings">
+      <button type="button" class="set-row import-only" onclick="openImport()">
+        <span class="set-icon" style="background:#6633d926;color:#6633d9"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></span><span class="grow">Import bank statement</span><span class="value">PDF · photo</span><span class="chev">›</span>
+      </button>
       <button type="button" class="set-row" id="exportBtn">
         <span class="set-icon" style="background:#1f9d6b26;color:#1f9d6b"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span><span class="grow">Download my entries</span><span class="value">Excel · PDF</span><span class="chev">›</span>
       </button>
@@ -1882,7 +1986,7 @@
       $('donutArea').innerHTML = `
         <div class="donut-wrap">
           <svg viewBox="0 0 42 42" role="img" aria-label="Spending by category chart">
-            <circle cx="21" cy="21" r="15.915" fill="none" stroke="#f2f3ee" stroke-width="6"></circle>${rings}
+            <circle cx="21" cy="21" r="15.915" fill="none" class="donut-track" stroke-width="6"></circle>${rings}
           </svg>
           <div class="donut-center"><span>Spent</span><strong>${naira(s.totalOut)}</strong></div>
         </div>`;
@@ -2054,6 +2158,23 @@
       toast('Entry restored ✓');
     }
 
+    // ================= DARK MODE =================
+    // Saved on this device. The button sits between the bell and the profile picture.
+    function applyTheme(theme) {
+      const dark = theme === 'dark';
+      if (dark) document.documentElement.dataset.theme = 'dark';
+      else delete document.documentElement.dataset.theme;
+      $('themeBtn').setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', dark ? '#1c1630' : '#eee8ff');
+    }
+    applyTheme(localStorage.getItem('mu_theme') === 'dark' ? 'dark' : 'light');
+    $('themeBtn').onclick = () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem('mu_theme', next); } catch (e) {}
+      applyTheme(next);
+    };
+
     // ================= WELCOME QUESTION (new users, once) =================
     // The user must pick one option and tap Continue before using the app.
     function askWhatToTrack() {
@@ -2156,6 +2277,222 @@
       toast(carryOver ? 'Leftover will carry over ✓' : 'Each month starts from ₦0');
       loadHome();
     };
+
+    // ================= BANK STATEMENT IMPORT =================
+    // 1) The statement is turned into page pictures on the phone (works with password-protected PDFs).
+    // 2) Our server asks Claude to read them. 3) The user checks the list and imports.
+    // The statement file is never saved.
+    // Turn this to true once the "read-statement" function and OpenRouter key are set up in Supabase
+    const IMPORT_READY = false;
+    if (IMPORT_READY) document.body.classList.add('import-on');
+    const IMP_MAX_PAGES = 15;
+    const UPLOAD_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>';
+    let impRows = [];
+
+    function impStep(html) {
+      if (!$('sheet').open) openSheet('');
+      $('sheet').innerHTML = `<div class="sheet-head"><h2>Import bank statement</h2><button type="button" class="close-x" onclick="closeSheet()" aria-label="Close">✕</button></div>` + html;
+    }
+    function impProgress(text) {
+      impStep(`<div class="imp-progress"><div class="spin"></div><b id="impText">${escapeHtml(text)}</b><p class="sheet-sub" style="margin-top:6px">Please keep this screen open.</p></div>`);
+    }
+    function impError(text) {
+      impStep(`<p class="form-msg" style="margin:14px 0">${escapeHtml(text)}</p>
+        <button type="button" class="btn btn-dark" style="width:100%" onclick="openImport()">Try again</button>`);
+    }
+
+    function openImport() {
+      openSheet('');
+      impStep(`
+        <p class="sheet-sub">Add many entries at once from the statement your bank sends you.</p>
+        <label class="imp-drop" for="impFile">
+          ${UPLOAD_ICON}
+          <b>Choose your statement</b>
+          <span>PDF, or photos of the pages (up to ${IMP_MAX_PAGES} pages)</span>
+        </label>
+        <input type="file" id="impFile" class="file-hidden" accept="application/pdf,image/*" multiple>
+        <ul class="imp-points">
+          <li>Works with GTBank, Access, Zenith, UBA, Opay, Kuda, Moniepoint and more.</li>
+          <li>Password-protected PDF? We'll ask for the password.</li>
+          <li>You check every entry before anything is saved.</li>
+          <li>Your statement is not stored. It is read once by our AI provider to find your entries.</li>
+        </ul>`);
+      $('impFile').onchange = () => { const f = [...$('impFile').files]; if (f.length) readStatementFiles(f); };
+    }
+
+    // Turn a picture into a smaller JPEG (base64 without the "data:" part)
+    function toJpeg(canvasOrImg, w, h, maxSide) {
+      const scale = Math.min(1, maxSide / Math.max(w, h));
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * scale); c.height = Math.round(h * scale);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(canvasOrImg, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.82).split(',')[1];
+    }
+
+    async function pdfToImages(file) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const data = new Uint8Array(await file.arrayBuffer());
+      const task = pdfjsLib.getDocument({ data });
+
+      // Ask for the password if the PDF is locked
+      task.onPassword = (givePassword, reason) => {
+        impStep(`
+          <p class="sheet-sub">This statement is locked with a password. Banks often use your date of birth, phone number or part of your account number. Check the email your bank sent.</p>
+          <label for="impPw">PDF password</label>
+          <input type="password" id="impPw" autocomplete="off">
+          <p class="form-msg" id="impPwMsg">${reason === 2 ? 'That password is not correct. Try again.' : ''}</p>
+          <button type="button" class="btn btn-dark" id="impPwGo" style="width:100%;margin-top:6px">Open statement</button>`);
+        $('impPw').focus();
+        const go = () => { if ($('impPw').value) { impProgress('Opening your statement...'); givePassword($('impPw').value); } };
+        $('impPwGo').onclick = go;
+        $('impPw').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+      };
+
+      const pdf = await task.promise;
+      if (pdf.numPages > IMP_MAX_PAGES) throw new Error('too_many_pages');
+      const images = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        impProgress(`Preparing page ${i} of ${pdf.numPages}...`);
+        const page = await pdf.getPage(i);
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: Math.min(2.5, 1500 / base.width) });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(viewport.width); canvas.height = Math.round(viewport.height);
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        images.push({ media_type: 'image/jpeg', data: toJpeg(canvas, canvas.width, canvas.height, 2000) });
+      }
+      return images;
+    }
+
+    function photoToImage(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image(); const src = URL.createObjectURL(file);
+        img.onload = () => { resolve({ media_type: 'image/jpeg', data: toJpeg(img, img.naturalWidth, img.naturalHeight, 2000) }); URL.revokeObjectURL(src); };
+        img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('bad_image')); };
+        img.src = src;
+      });
+    }
+
+    async function readStatementFiles(files) {
+      try {
+        impProgress('Opening your statement...');
+        let images = [];
+        const pdfs = files.filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+        if (pdfs.length > 1) return impError('Please choose one PDF at a time.');
+        if (pdfs.length) images = await pdfToImages(pdfs[0]);
+        else {
+          if (files.length > IMP_MAX_PAGES) return impError(`Please choose up to ${IMP_MAX_PAGES} photos.`);
+          for (let i = 0; i < files.length; i++) {
+            impProgress(`Preparing photo ${i + 1} of ${files.length}...`);
+            images.push(await photoToImage(files[i]));
+          }
+        }
+        impProgress('MoniUsed is reading your statement. This can take up to a minute...');
+
+        const { data, error } = await sb.functions.invoke('read-statement', { body: { images } });
+        if (error) {
+          let info = {};
+          try { info = await error.context.json(); } catch (e) { /* no details */ }
+          const msg = {
+            limit: `You've used all ${info.limit || 5} statement imports for this month. You can import more next month.`,
+            too_many_pages: `This statement has too many pages. Please use one with up to ${IMP_MAX_PAGES} pages, or split it by month.`,
+            too_big: 'This statement is too large. Try a shorter period, like one month.',
+            not_logged_in: 'Please log in again and try once more.',
+            no_credit: 'Statement import is taking a short break. Please try again later.'
+          }[info.error] || 'We could not read this statement. Check your internet and try again.';
+          return impError(msg);
+        }
+        showImportReview(data.transactions || [], data.used, data.limit);
+      } catch (err) {
+        if (err && err.message === 'too_many_pages') return impError(`This statement has more than ${IMP_MAX_PAGES} pages. Please download a shorter period, like one month.`);
+        impError('We could not open this file. Make sure it is a bank statement PDF or clear photos of it.');
+      }
+    }
+
+    async function showImportReview(found, used, limit) {
+      let skippedIncome = 0;
+      if (!trackIncome) { skippedIncome = found.filter(t => t.type === 'income').length; found = found.filter(t => t.type !== 'income'); }
+      if (!found.length) {
+        return impError(skippedIncome ? 'Only money-in lines were found, and you track spending only.' : 'No entries were found in this statement. Try a clearer file.');
+      }
+
+      // Spot possible duplicates (same day, type and amount already saved)
+      const dates = found.map(t => t.date).sort();
+      const { data: existing } = await sb.from('transactions').select('txn_date, type, amount')
+        .gte('txn_date', dates[0]).lte('txn_date', dates[dates.length - 1]);
+      const have = new Map();
+      (existing || []).forEach(e => { const k = `${e.txn_date}|${e.type}|${Number(e.amount)}`; have.set(k, (have.get(k) || 0) + 1); });
+
+      impRows = found.sort((a, b) => a.date < b.date ? 1 : -1).map(t => {
+        const k = `${t.date}|${t.type}|${Number(t.amount)}`;
+        const dup = (have.get(k) || 0) > 0;
+        if (dup) have.set(k, have.get(k) - 1);
+        return { ...t, dup, on: !dup };
+      });
+      renderImportReview(skippedIncome, used, limit);
+    }
+
+    function renderImportReview(skippedIncome, used, limit) {
+      const sel = impRows.filter(r => r.on);
+      const inn = sel.filter(r => r.type === 'income').reduce((a, r) => a + r.amount, 0);
+      const out = sel.filter(r => r.type === 'expense').reduce((a, r) => a + r.amount, 0);
+      const dups = impRows.filter(r => r.dup).length;
+      const catOptions = (type, current) => CATEGORIES[type].map(c =>
+        `<option ${c[0] === current ? 'selected' : ''}>${escapeHtml(c[0])}</option>`).join('');
+
+      impStep(`
+        <p class="sheet-sub">Check the entries. Untick anything you don't want, and fix categories if needed.</p>
+        <div class="imp-summary">
+          Found <b>${impRows.length}</b> entries${trackIncome ? ` · In <b>${naira(inn)}</b>` : ''} · Out <b>${naira(out)}</b>
+          ${dups ? `<br><span class="imp-dup">${dups} possible duplicate${dups > 1 ? 's' : ''}</span> already in MoniUsed, left unticked.` : ''}
+          ${skippedIncome ? `<br>${skippedIncome} money-in lines skipped (you track spending only).` : ''}
+        </div>
+        <div class="imp-tools"><span>${sel.length} selected</span>
+          <span><button type="button" id="impAll">Select all</button> · <button type="button" id="impNone">None</button></span></div>
+        <ul class="imp-list">${impRows.map((r, i) => `
+          <li class="imp-row ${r.on ? '' : 'off'}">
+            <input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''} aria-label="Import ${escapeHtml(r.title)}">
+            <span class="t"><b>${escapeHtml(r.title)}</b>
+              <small>${dayLabel(r.date)}${r.dup ? '<span class="imp-dup">Possible duplicate</span>' : ''}</small><br>
+              <select data-c="${i}" aria-label="Category">${catOptions(r.type, r.category)}</select></span>
+            <span class="a ${r.type === 'income' ? 'in' : ''}">${r.type === 'income' ? '+' : '−'}${naira(r.amount)}</span>
+          </li>`).join('')}</ul>
+        <div class="imp-foot">
+          <p class="form-msg" id="sheetMsg"></p>
+          <button type="button" class="btn btn-dark" id="impGo" style="width:100%" ${sel.length ? '' : 'disabled'}>Import ${sel.length} ${sel.length === 1 ? 'entry' : 'entries'}</button>
+          ${used && limit ? `<p class="welcome-note">${used} of ${limit} statement imports used this month.</p>` : ''}
+        </div>`);
+
+      const again = () => renderImportReview(skippedIncome, used, limit);
+      $('sheet').querySelectorAll('input[data-i]').forEach(cb => cb.onchange = () => { impRows[cb.dataset.i].on = cb.checked; again(); });
+      $('sheet').querySelectorAll('select[data-c]').forEach(se => se.onchange = () => { impRows[se.dataset.c].category = se.value; });
+      $('impAll').onclick = () => { impRows.forEach(r => r.on = true); again(); };
+      $('impNone').onclick = () => { impRows.forEach(r => r.on = false); again(); };
+      $('impGo').onclick = doImport;
+    }
+
+    async function doImport() {
+      const rows = impRows.filter(r => r.on).map(r => ({
+        type: r.type, title: r.title, amount: r.amount, category: r.category, txn_date: r.date
+      }));
+      if (!rows.length) return;
+      $('impGo').disabled = true; $('impGo').textContent = 'Importing...';
+      for (let i = 0; i < rows.length; i += 200) {
+        const { error } = await sb.from('transactions').insert(rows.slice(i, i + 200));
+        if (error) {
+          $('sheetMsg').textContent = i ? `Imported ${i} entries, then something went wrong. Check your entries before trying again.` : 'Could not import. Check your internet and try again.';
+          $('impGo').disabled = false; $('impGo').textContent = 'Try again';
+          if (i) refreshAll();
+          return;
+        }
+      }
+      closeSheet();
+      refreshAll();
+      toast(`Imported ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'} ✓`);
+    }
 
     // ================= SPONSORED CARD =================
     // One advert on Home, for Starter users only. Everyone sees the same adverts (no targeting).
